@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "commonjs",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "outDir": "./build",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "ezpz/dev.tsx", "ezpz/build.ts"],
+  "exclude": ["node_modules", "build"],
+  "ts-node": {
+    "files": true
+  }
+}

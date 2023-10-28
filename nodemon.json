@@ -1,0 +1,5 @@
+{
+  "watch": ["src", "ezpz"],
+  "exec": "npm run dev-stuff",
+  "ext": "js,jsx,ts,tsx,html,css,scss"
+}
