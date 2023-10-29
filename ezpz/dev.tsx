@@ -15,14 +15,14 @@ const router = Router()
 
 const test_route_for_import = (root_dir + routes.index + '.tsx')
 
-console.log(test_route_for_import)
+// console.log(test_route_for_import)
 
 const importedRoute = require(test_route_for_import)
 const component = importedRoute.default()
 
 app.use('/scripts', express.static(`${__dirname}/../bundle/`))
 
-console.log(routes.index)
+// console.log(routes.index)
 
 router.get(
   routes.index.replace('index', ''),
@@ -34,18 +34,18 @@ router.get(
       <App title={req.path}>
         {component}
       </App>
-    ))
+    ).replace('__log_statement__', '\"initial html loaded\"'))
   },
 )
 
 app.use(router)
 
-// app.get('/', (req: Request, res: Response) => {
+// app.get('/*', (req: Request, res: Response) => {
 //   const path = req.path;
 
 //   res.send(renderToString(
 //     <App title={path} />
-//   ))
+//   ).replace('__log_statement__', '\"initial html loaded\"'))
 //   // res.sendFile('index.html', { root: `${__dirname}/../` })
 // })
 

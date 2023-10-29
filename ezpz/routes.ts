@@ -1,5 +1,29 @@
 import fs from 'fs'
 import path from 'path'
+import raw_routes_from_json from '../bundle/routes_raw.json'
+
+type PascalCase<S extends string> = string extends S
+  ? string
+  : S extends `${infer T}-${infer U}`
+  ? `${Capitalize<T>}${PascalCase<U>}`
+  : Capitalize<S>
+type CamelCase<S extends string | number | symbol> = string extends S
+  ? string
+  : S extends `${infer T}-${infer U}`
+  ? `${T}${PascalCase<U>}`
+  : S
+
+type DeepCamelCaseKeys<T> = T extends object
+  ? {
+    [K in keyof T as CamelCase<K>]: DeepCamelCaseKeys<T[K]>
+  }
+  : T
+
+// these types will be lagged
+// it will be one build behind the actual routes
+// please run a build after making any change to update this type
+type RawRoutesFromJson = typeof raw_routes_from_json
+type Routes = DeepCamelCaseKeys<RawRoutesFromJson>
 
 const invalid_path_names = [
   'index',
@@ -33,7 +57,8 @@ const invalid_file_names = [
   'scripts',
 ]
 
-export let routes_raw: any = {}
+// @ts-expect-error - this is a hack to get the type of the routes object
+export let routes_raw: RawRoutesFromJson = {}
 
 function generatePathsConfig(dir: string) {
   const files = fs.readdirSync(dir)
@@ -67,8 +92,8 @@ function generatePathsConfig(dir: string) {
       if (basename === '_components') continue
       if (basename === 'pages') continue
 
-      // make sure filePath only includes alphanumeric and dash
-      const regex = new RegExp(/^[a-zA-Z0-9-]+$/)
+      // make sure filePath only includes lowercase alphanumeric and dash
+      const regex = new RegExp(/^[a-z0-9-]+$/)
       if (!regex.test(basename))
         throw new Error(`Invalid file name: ${basename}!`)
 
@@ -84,8 +109,13 @@ function generatePathsConfig(dir: string) {
 }
 
 
-routes_raw = generatePathsConfig('src/pages')
+routes_raw = generatePathsConfig('src/pages') as RawRoutesFromJson
 
+
+fs.writeFileSync(
+  'bundle/routes_raw.json',
+  JSON.stringify(routes_raw, null, 2),
+)
 
 /**
  * Simple object check.
@@ -126,26 +156,6 @@ const toCamelCase = (str: string) => {
   })
 }
 
-type PascalCase<S extends string> = string extends S
-  ? string
-  : S extends `${infer T}-${infer U}`
-  ? `${Capitalize<T>}${PascalCase<U>}`
-  : Capitalize<S>
-type CamelCase<S extends string | number | symbol> = string extends S
-  ? string
-  : S extends `${infer T}-${infer U}`
-  ? `${T}${PascalCase<U>}`
-  : S
-
-type DeepCamelCaseKeys<T> = T extends object
-  ? {
-    [K in keyof T as CamelCase<K>]: DeepCamelCaseKeys<T[K]>
-  }
-  : T
-
-type Routes = DeepCamelCaseKeys<typeof routes_raw>
-
-
 // @ts-ignore
 let routes: Routes = null
 
@@ -159,7 +169,7 @@ export const generatePathsFromPathsConfig = (path_object: any, previous_level?: 
     const current_object = current_level[i]
 
     if (typeof current_object[1] === 'string') {
-      const path_string = previous_level + current_object[0]
+      const path_string = (previous_level + current_object[0])
       const path_array = path_string.split('/')
       const path_json = path_array
         .map((x) => `{"${toCamelCase(x)}"`)
@@ -186,5 +196,73 @@ fs.writeFileSync(
   'bundle/routes.json',
   JSON.stringify(routes, null, 2),
 )
+
+let react_router_routes: any = []
+
+let react_router_imports: any = []
+
+const generateImportsForReactRouter = (routes_object: any) => {
+  const routes_array = Object.entries(routes_object)
+
+  for (let i = 0; i < routes_array.length; i++) {
+    if (typeof routes_array[i][1] === 'string') {
+      const _route_string = routes_array[i][1] as string
+      // we're a string, so we're a route
+      react_router_imports.push(`import ${_route_string.substring(1, _route_string.length-1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('')}Index from '../src/pages${_route_string.concat('index')}'`)
+    } else {
+      // we're an object, so we're a directory
+      generateImportsForReactRouter(routes_array[i][1])
+    }
+  }
+}
+
+const generateRoutesForReactRouter = async (routes_object: any) => {
+  const routes_array = Object.entries(routes_object)
+
+  for (let i = 0; i < routes_array.length; i++) {
+    if (typeof routes_array[i][1] === 'string') {
+      const _route_string = routes_array[i][1] as string
+      // we're a string, so we're a route
+      react_router_routes.push({
+        path: _route_string,
+        Component: _route_string
+          .substring(1, _route_string.length-1)
+          .split('/')
+          .map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1)))
+          .join('')
+          .concat('Index'),
+      })
+    } else {
+      // we're an object, so we're a directory
+      generateRoutesForReactRouter(routes_array[i][1])
+    }
+  }
+}
+
+generateImportsForReactRouter(routes_raw)
+generateRoutesForReactRouter(routes_raw)
+
+const react_router_file_content = `
+import React from 'react'
+import { createBrowserRouter } from "react-router-dom"
+
+// import the routes
+${react_router_imports.join('\n')}
+
+// router array
+const routes = [
+  ${react_router_routes.map((x) => `{path: '${x.path}', Component: ${x.Component}}`).join(',\n  ')}
+]
+
+// init and export router
+export const router = createBrowserRouter(routes);
+`
+
+fs.writeFileSync(
+  'bundle/routes_for_router.tsx',
+  react_router_file_content,
+)
+
+
 
 export default routes as Routes

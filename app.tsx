@@ -17,7 +17,8 @@ const App: FC<AppProps> = ({
       <body id="app-root">
         {children}
       </body>
-      <script src="scripts/bundle.js"></script>
+      <script>console.log(__log_statement__)</script>
+      <script defer src="scripts/bundle.js"/>
     </html>
   )
 }

@@ -14,10 +14,15 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "ezpz": ["./ezpz"],
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "ezpz/dev.tsx", "ezpz/build.ts"],
   "exclude": ["node_modules", "build"],
   "ts-node": {
-    "files": true
+    "files": true,
+    "require": ["tsconfig-paths/register"],
   }
 }
