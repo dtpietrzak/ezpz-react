@@ -3,43 +3,53 @@ import express, { Request, Response, Router } from 'express'
 import App from '../app';
 import routes from '../bundle/routes.json'
 
-const root_dir = `${__dirname}/../src/pages`
+console.log('\n\n\nApp loading...\n')
+
+// remove last item from __dirname
+const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
+
+const root_dir = `${project_root_dir}/src/pages`
 const app = express()
 const port = 3000
 const router = Router()
 
-const test_route = (root_dir + routes.index + 'index.tsx')
-const importedRoute = require(test_route)
+const test_route_for_import = (root_dir + routes.index + '.tsx')
+
+console.log(test_route_for_import)
+
+const importedRoute = require(test_route_for_import)
 const component = importedRoute.default()
 
 app.use('/scripts', express.static(`${__dirname}/../bundle/`))
 
-// router.use(
-//   routes.dashboard.index,
-//   (
-//     req: Request,
-//     res: Response,
-//   ) => {
-//     res.send(renderToString(
-//       <App title={req.path}>
-//         {component}
-//       </App>
-//     ))
-//   },
-// )
+console.log(routes.index)
 
-// app.use(router)
+router.get(
+  routes.index.replace('index', ''),
+  (
+    req: Request,
+    res: Response,
+  ) => {
+    res.send(renderToString(
+      <App title={req.path}>
+        {component}
+      </App>
+    ))
+  },
+)
 
-app.get('/', (req: Request, res: Response) => {
-  const path = req.path;
+app.use(router)
 
-  res.send(renderToString(
-    <App title={path} />
-  ))
-  // res.sendFile('index.html', { root: `${__dirname}/../` })
-})
+// app.get('/', (req: Request, res: Response) => {
+//   const path = req.path;
+
+//   res.send(renderToString(
+//     <App title={path} />
+//   ))
+//   // res.sendFile('index.html', { root: `${__dirname}/../` })
+// })
 
 
 app.listen(port, () => {
-  console.log(`Development app listening on port ${port}`)
+  console.log(`\nDevelopment app loaded and listening on port ${port}!`)
 })
