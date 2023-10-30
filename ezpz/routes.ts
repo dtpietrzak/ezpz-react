@@ -243,19 +243,19 @@ generateImportsForReactRouter(routes_raw)
 generateRoutesForReactRouter(routes_raw)
 
 const react_router_file_content = `
-import React from 'react'
 import { createBrowserRouter } from "react-router-dom"
+import { isClient } from "ezpz"
 
 // import the routes
 ${react_router_imports.join('\n')}
 
 // router array
-const routes = [
+export const routes = [
   ${react_router_routes.map((x) => `{path: '${x.path}', Component: ${x.Component}}`).join(',\n  ')}
 ]
 
 // init and export router
-export const router = createBrowserRouter(routes);
+export const router = isClient ? createBrowserRouter(routes) : null;
 `
 
 fs.writeFileSync(

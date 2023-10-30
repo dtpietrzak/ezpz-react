@@ -1,9 +1,18 @@
-import { Link as RLink } from 'react-router-dom'
+import { FC } from 'react'
+import { Link as RLink, LinkProps } from 'react-router-dom'
 
-interface LinkProps {
-  to: string
-}
-export const Link = typeof window !== 'undefined' ?
+export const Link: FC<LinkProps> = typeof window !== 'undefined' ?
   RLink
   :
-  () => null
+  (props) => {
+    return (
+      <a 
+        // TODO: handle the props.to to href string conversion properly
+        // react-router-dom has a different way of handling the to prop
+        href={typeof props.to === 'string' ? props.to : undefined}
+        {...props}
+      >
+        {props.children}
+      </a>
+    )
+  }

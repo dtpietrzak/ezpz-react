@@ -1,10 +1,12 @@
-import { useState, useEffect, Link } from 'ezpz'
+import { useState, useEffect, Link, LoadHandler, LoadStatus } from 'ezpz'
 
 const Home = () => {
   const [text, setText] = useState<string>("wow")
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>('loading')
 
   useEffect(() => {
     console.log(text)
+    setLoadStatus('success')
   }, [text])
 
   return (
@@ -23,6 +25,11 @@ const Home = () => {
       >
         <Link to="/test-dashes/">Test Dashes</Link>
       </button>
+      <LoadHandler 
+        status={loadStatus}
+        loading={<div>loading...</div>}
+        success={<div>success!</div>}
+      />
     </div>
   )
 }
