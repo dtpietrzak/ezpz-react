@@ -1,20 +1,28 @@
-// import { useState } from 'react'
+import { PageConfig, useNavigate, useState, Page } from "ezpz"
+
+export const config: PageConfig = {}
 
 const Home = () => {
-  // const [text, setText] = useState<string>("")
+  const navigate = useNavigate()
+  const [text, setText] = useState<string>("")
 
   return (
-    <div>
+    <Page config={config}>
       <h1>Test-Dashes</h1>
       <textarea
         id="editor"
         name="editor"
         rows={10}
         cols={80}
-        // value={text}
-        // onChange={(e) => setText(e.target.value)}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
       />
-    </div>
+      <button 
+        onClick={() => navigate(-1)}
+      >
+        Back
+      </button>
+    </Page>
   )
 }
 

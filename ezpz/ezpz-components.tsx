@@ -1,5 +1,34 @@
-import { HTMLProps } from 'react'
-import { isServer } from './ezpz-utils';
+import { HTMLProps, FC } from 'react'
+import { isServer } from './ezpz-utils'
+import { useEffect } from 'ezpz/react-wrappers'
+import { useLocation } from 'ezpz/react-router-dom-wrappers'
+import { config as ezpzConfig } from 'ezpz.config'
+
+export type PageConfig = {
+  title?: string
+  description?: string
+  keywords?: string
+}
+
+interface PageProps extends HTMLProps<HTMLDivElement> {
+  config: PageConfig
+}
+
+export const Page: FC<PageProps> = ({
+  config,
+  ...props
+}) => {
+  const location = useLocation()
+
+  useEffect(() => {
+    document.title = config.title ?? ezpzConfig.app_name
+  }, [location])
+
+  return (
+    <div {...props}/>
+  )
+}
+
 
 export type LoadStatus = 'init' | 'loading' | 'success' | 'error'
 
@@ -11,7 +40,7 @@ interface LoadHandlerProps extends HTMLProps<HTMLDivElement> {
   error?: JSX.Element
 }
 
-export const LoadHandler = ({
+export const LoadHandler: FC<LoadHandlerProps> = ({
   status,
   init,
   loading,

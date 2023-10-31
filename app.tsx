@@ -12,13 +12,14 @@ const App: FC<AppProps> = ({
   return (
     <html>
       <head>
-        <title>{title ?? 'ezpz'}</title>
+        <title>{title ?? ''}</title>
+        <script>__script_injection__</script>
       </head>
-      <body id="app-root">
-        {children}
+      <body>
+        <div id="app-root">
+          {children}
+        </div>
       </body>
-      <script>console.log(__log_statement__)</script>
-      <script defer src="scripts/bundle.js"/>
     </html>
   )
 }

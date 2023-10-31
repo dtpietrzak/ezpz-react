@@ -198,7 +198,6 @@ fs.writeFileSync(
 )
 
 let react_router_routes: any = []
-
 let react_router_imports: any = []
 
 const generateImportsForReactRouter = (routes_object: any) => {
@@ -207,8 +206,15 @@ const generateImportsForReactRouter = (routes_object: any) => {
   for (let i = 0; i < routes_array.length; i++) {
     if (typeof routes_array[i][1] === 'string') {
       const _route_string = routes_array[i][1] as string
+
+      const component_name = _route_string.substring(1, _route_string.length - 1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('') + 'Index'
+
+      const component_file_path = `'../src/pages${_route_string.concat('index')}'`
+
       // we're a string, so we're a route
-      react_router_imports.push(`import ${_route_string.substring(1, _route_string.length-1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('')}Index from '../src/pages${_route_string.concat('index')}'`)
+      react_router_imports.push(
+        `import ${component_name}, { config as ${component_name}_config } from ${component_file_path}`
+      )
     } else {
       // we're an object, so we're a directory
       generateImportsForReactRouter(routes_array[i][1])
@@ -222,15 +228,19 @@ const generateRoutesForReactRouter = async (routes_object: any) => {
   for (let i = 0; i < routes_array.length; i++) {
     if (typeof routes_array[i][1] === 'string') {
       const _route_string = routes_array[i][1] as string
+
+      const component_name = _route_string
+        .substring(1, _route_string.length - 1)
+        .split('/')
+        .map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1)))
+        .join('')
+        .concat('Index')
+
       // we're a string, so we're a route
       react_router_routes.push({
         path: _route_string,
-        Component: _route_string
-          .substring(1, _route_string.length-1)
-          .split('/')
-          .map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1)))
-          .join('')
-          .concat('Index'),
+        Component: component_name,
+        title: component_name + '_config.title',
       })
     } else {
       // we're an object, so we're a directory
@@ -251,7 +261,11 @@ ${react_router_imports.join('\n')}
 
 // router array
 export const routes = [
-  ${react_router_routes.map((x) => `{path: '${x.path}', Component: ${x.Component}}`).join(',\n  ')}
+  ${react_router_routes.map((x) => `{
+    path: '${x.path}',
+    Component: ${x.Component},
+    title: ${x.title},
+  }`).join(',\n  ')}
 ]
 
 // init and export router

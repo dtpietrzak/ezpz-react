@@ -1,16 +1,48 @@
-import { useState, useEffect, Link, LoadHandler, LoadStatus } from 'ezpz'
+import {
+  useState,
+  useEffect,
+  useServer,
+  Link,
+  Page,
+  LoadHandler,
+  LoadStatus,
+  PageConfig,
+} from 'ezpz'
+
+export const config: PageConfig = {
+  title: 'Home',
+}
+
+export const server = () => {
+
+}
 
 const Home = () => {
   const [text, setText] = useState<string>("wow")
   const [loadStatus, setLoadStatus] = useState<LoadStatus>('loading')
 
+  const [value, setValue, statusOfValue] = useServer('testInit', {
+    loadFunction: async () => {
+      return {
+        data: 'test',
+        status: 'success',
+      }
+    },
+    updateFunction: async (data) => {
+      return {
+        data,
+        status: 'success',
+      }
+    }
+  })
+
   useEffect(() => {
-    console.log(text)
+    console.log(text, value, 'from useEffect')
     setLoadStatus('success')
-  }, [text])
+  }, [text, value])
 
   return (
-    <div>
+    <Page config={config}>
       <h1>Home</h1>
       <textarea
         id="editor"
@@ -20,17 +52,17 @@ const Home = () => {
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <button 
+      <button
         onClick={() => console.log("clicked")}
       >
         <Link to="/test-dashes/">Test Dashes</Link>
       </button>
-      <LoadHandler 
+      <LoadHandler
         status={loadStatus}
         loading={<div>loading...</div>}
         success={<div>success!</div>}
       />
-    </div>
+    </Page>
   )
 }
 

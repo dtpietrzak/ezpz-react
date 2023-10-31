@@ -1,4 +1,7 @@
-// import { useState } from 'react'
+import { PageConfig } from "ezpz"
+
+export const config: PageConfig = {}
+
 
 const Home = () => {
   // const [text, setText] = useState<string>("")
