@@ -2,7 +2,7 @@ import { renderToString } from 'react-dom/server'
 import express, { Request, Response, Router } from 'express'
 import App from '../app';
 import { routes } from '../bundle/routes_for_router'
-import { scriptLoader } from './script-loader'
+import { scriptLoader } from './scripts/script-loader'
 import { config } from 'ezpz.config';
 
 console.log('\n\n\nApp loading...\n')

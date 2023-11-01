@@ -1,8 +1,8 @@
 import { useState as RUseState, useEffect as RUseEffect } from 'react'
 
-import { LoadStatus } from 'ezpz/ezpz-components'
+import { LoadStatus } from './ezpz-components'
 import { isClient, isServer } from './ezpz-utils'
-import { useState } from 'ezpz/react-wrappers'
+import { useState } from './react-wrappers'
 
 export type ErrorMessage = string
 
@@ -61,7 +61,7 @@ export const useServer = <T,>(
 
   if (isClient && (loadOn !== 'server')) {
     // client - runtime
-    const [state, _setState] = RUseState(initialState)
+    const [state, setState] = RUseState(initialState)
     const [status, setStatus] = RUseState<LoadStatus>('init')
 
     let _error: ErrorMessage | undefined
@@ -74,7 +74,7 @@ export const useServer = <T,>(
         .then(({ data, status, error }) => {
           if (!ignore) {
             if (status === 'success') {
-              _setState(data ?? initialState)
+              setState(data ?? initialState)
             }
             setStatus(status)
             _error = error
@@ -90,24 +90,24 @@ export const useServer = <T,>(
       return () => { ignore = true }
     }, [])
 
-    const setState = async (data: React.SetStateAction<T>) => {
+    const updateState = async (data: React.SetStateAction<T>) => {
       if (updateAs === 'client-only') {
-        _setState(data)
+        setState(data)
         setStatus('success')
         return
       }
 
-      if (updateAs === 'optimistic') _setState(data)
+      if (updateAs === 'optimistic') setState(data)
       setStatus('loading')
 
       if (updateFunction) {
         updateFunction(data)
           .then(({ data: updatedData, status, error }) => {
             if (status === 'success' && updateAs === 'pessimistic') {
-              _setState(updatedData ?? data)
+              setState(updatedData ?? data)
             }
             if (status === 'error' && updateAs === 'optimistic') {
-              _setState(initialState)
+              setState(initialState)
             }
             setStatus(status)
             _error = error
@@ -122,7 +122,7 @@ export const useServer = <T,>(
 
     return [
       state,
-      setState,
+      updateState,
       status,
     ]
   }

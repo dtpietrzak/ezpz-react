@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import raw_routes_from_json from '../bundle/routes_raw.json'
+import raw_routes_from_json from '../../bundle/routes_raw.json'
 
 type PascalCase<S extends string> = string extends S
   ? string
@@ -89,7 +89,7 @@ function generatePathsConfig(dir: string) {
     } else {
       if (invalid_path_names.includes(basename))
         throw new Error(`Cannot have a directory named ${basename}!`)
-      if (basename === '_components') continue
+      if (basename.startsWith('_')) continue
       if (basename === 'pages') continue
 
       // make sure filePath only includes lowercase alphanumeric and dash

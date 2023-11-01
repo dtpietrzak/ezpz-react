@@ -7,7 +7,7 @@
     "dev-stuff": "npm run gen-routes && npm run gen-bundle && node --loader ts-node/esm ezpz/dev.tsx",
     "build": "node --loader ts-node/esm ezpz/build.ts",
     "start": "node --loader ts-node/esm ezpz/run.ts",
-    "gen-routes": "node --loader ts-node/esm ezpz/routes.ts",
+    "gen-routes": "node --loader ts-node/esm ezpz/scripts/routes.ts",
     "gen-bundle": "node esbuild.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

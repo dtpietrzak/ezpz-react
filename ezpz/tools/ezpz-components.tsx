@@ -1,7 +1,7 @@
 import { HTMLProps, FC } from 'react'
 import { isServer } from './ezpz-utils'
-import { useEffect } from 'ezpz/react-wrappers'
-import { useLocation } from 'ezpz/react-router-dom-wrappers'
+import { useEffect } from './react-wrappers'
+import { useLocation } from './react-router-dom-wrappers'
 import { config as ezpzConfig } from 'ezpz.config'
 
 export type PageConfig = {

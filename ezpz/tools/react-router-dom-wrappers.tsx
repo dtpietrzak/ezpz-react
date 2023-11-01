@@ -1,4 +1,4 @@
-import { isClient } from 'ezpz/ezpz-utils'
+import { isClient } from './ezpz-utils'
 import { FC } from 'react'
 import {
   Link as RLink,

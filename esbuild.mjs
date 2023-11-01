@@ -1,7 +1,7 @@
 import * as esbuild from 'esbuild'
 
 await esbuild.build({
-  entryPoints: ['./ezpz/client-script.tsx'],
+  entryPoints: ['./ezpz/scripts/client-script.tsx'],
   bundle: true,
   minify: true,
   sourcemap: true,

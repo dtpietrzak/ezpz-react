@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 
 import { RouterProvider } from 'react-router-dom'
 
-import { router } from '../bundle/routes_for_router'
+import { router } from '../../bundle/routes_for_router'
 
 const div = document.getElementById('app-root')
 
