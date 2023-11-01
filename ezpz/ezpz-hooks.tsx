@@ -1,10 +1,14 @@
+import { useState as RUseState, useEffect as RUseEffect } from 'react'
+
 import { LoadStatus } from 'ezpz/ezpz-components'
 import { isClient, isServer } from './ezpz-utils'
-import { server } from 'src/pages'
 import { useState } from 'ezpz/react-wrappers'
 
-export type ServerFunction<T> = (data?: T) => Promise<{
+export type ErrorMessage = string
+
+export type ServerFunction<T> = (data?: React.SetStateAction<T>) => Promise<{
   data?: T,
+  error?: ErrorMessage,
   status: LoadStatus,
 }>
 
@@ -28,46 +32,150 @@ export type ServerFunction<T> = (data?: T) => Promise<{
 //     work this way, regardless of these settings.
 // 
 
-export const useServer: <T>(
-  initialState: (T | (() => T)),
-  settings: {
-    loadFunction: ServerFunction<T>
-    updateFunction?: ServerFunction<T>
-    optimisticUpdate?: boolean
-    renderOptions?: {
-      location?: 'server' | 'client' | 'both'
-      serverRenderTime?: 'compile' | 'runtime'
-    }
-  },
-) => [(T | (() => T)), React.Dispatch<React.SetStateAction<T>>, LoadStatus] = (
-  initialState,
+
+
+export const useServer = <T,>(
+  initialState: T,
   {
-    renderOptions = {
-      location: 'both',
-      serverRenderTime: 'runtime',
-    },
     loadFunction,
     updateFunction,
-    optimisticUpdate = true,
+  }: {
+    loadFunction: ServerFunction<T>
+    updateFunction?: ServerFunction<T>
   },
-) => {
-    if (isServer && (renderOptions.location !== 'client')) {
-      if (renderOptions.serverRenderTime === 'runtime') {
-        console.log('on server (runtime): ', initialState)
+  {
+    loadOn = 'client',
+    serverLoadAt = 'runtime',
+    updateAs = 'optimistic',
+  }: {
+    loadOn?: 'server' | 'client' | 'both'
+    serverLoadAt?: 'compile' | 'runtime'
+    updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
+  }
+): [
+    T,
+    | React.Dispatch<React.SetStateAction<T>>
+    | ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
+    LoadStatus,
+  ] => {
 
-        return [initialState, () => initialState, 'success']
-      } else {
-        console.log('on server (compile): ', initialState)
+  if (isClient && (loadOn !== 'server')) {
+    // client - runtime
+    const [state, _setState] = RUseState(initialState)
+    const [status, setStatus] = RUseState<LoadStatus>('init')
 
-        return [initialState, () => initialState, 'success']
+    let _error: ErrorMessage | undefined
+
+    RUseEffect(() => {
+      let ignore = false
+
+      setStatus('loading')
+      loadFunction()
+        .then(({ data, status, error }) => {
+          if (!ignore) {
+            if (status === 'success') {
+              _setState(data ?? initialState)
+            }
+            setStatus(status)
+            _error = error
+          }
+        })
+        .catch((error) => {
+          if (!ignore) {
+            setStatus('error')
+            _error = error
+          }
+        })
+
+      return () => { ignore = true }
+    }, [])
+
+    const setState = async (data: React.SetStateAction<T>) => {
+      if (updateAs === 'client-only') {
+        _setState(data)
+        setStatus('success')
+        return
       }
-    } else if (isClient && (renderOptions.location !== 'server')) {
-      console.log('on client: ', initialState)
 
-      const [state, setState] = useState(initialState)
-      return [state, setState, 'success']
+      if (updateAs === 'optimistic') _setState(data)
+      setStatus('loading')
+
+      if (updateFunction) {
+        updateFunction(data)
+          .then(({ data: updatedData, status, error }) => {
+            if (status === 'success' && updateAs === 'pessimistic') {
+              _setState(updatedData ?? data)
+            }
+            if (status === 'error' && updateAs === 'optimistic') {
+              _setState(initialState)
+            }
+            setStatus(status)
+            _error = error
+          })
+          .catch((error) => {
+            setStatus('error')
+            _error = error
+          })
+      }
+      return _error
     }
 
-    return [initialState, () => initialState, 'success']
+    return [
+      state,
+      setState,
+      status,
+    ]
   }
 
+  return [initialState, () => initialState, 'success']
+}
+
+export const useServerAsync = async <T,>(
+  initialState: T,
+  {
+    loadFunction,
+    updateFunction,
+  }: {
+    loadFunction: ServerFunction<T>
+    updateFunction?: ServerFunction<T>
+  },
+  {
+    loadOn = 'both',
+    serverLoadAt = 'runtime',
+    updateAs = 'optimistic',
+  }: {
+    loadOn?: 'server' | 'client' | 'both'
+    serverLoadAt?: 'compile' | 'runtime'
+    updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
+  }
+): Promise<[
+  T,
+  | React.Dispatch<React.SetStateAction<T>>
+  | ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
+  LoadStatus,
+]> => {
+
+  if (isServer && (loadOn !== 'client')) {
+    if (serverLoadAt === 'compile') {
+      // server - compile
+
+      // TODO: compile time server render
+
+      return [
+        initialState,
+        () => initialState,
+        'success',
+      ]
+    } else {
+      // server - runtime
+
+      const { data, status, error } = await loadFunction()
+
+      return [data ?? initialState, () => initialState, status]
+    }
+  } else if (isClient && (loadOn !== 'server')) {
+    // client - runtime
+  }
+
+  return [initialState, () => initialState, 'success']
+}

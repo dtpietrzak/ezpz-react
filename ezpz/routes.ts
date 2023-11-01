@@ -269,7 +269,7 @@ export const routes = [
 ]
 
 // init and export router
-export const router = isClient ? createBrowserRouter(routes) : null;
+export const router = null //  isClient ? createBrowserRouter(routes) : null;
 `
 
 fs.writeFileSync(

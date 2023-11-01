@@ -25,7 +25,7 @@ export const Page: FC<PageProps> = ({
   }, [location])
 
   return (
-    <div {...props}/>
+    <div {...props} />
   )
 }
 
@@ -51,22 +51,19 @@ export const LoadHandler: FC<LoadHandlerProps> = ({
   return (
     <div {...props}>
       {
-        isServer ?
+        status === 'init' ?
           init ? init : loading
           :
-          status === 'init' ?
-            init ? init : loading
+          status === 'loading' ?
+            loading
             :
-            status === 'loading' ?
-              loading
+            status === 'success' ?
+              success
               :
-              status === 'success' ?
-                success
+              status === 'error' ?
+                error ? error : loading
                 :
-                status === 'error' ?
-                  error ? error : loading
-                  :
-                  null
+                null
       }
     </div>
   )

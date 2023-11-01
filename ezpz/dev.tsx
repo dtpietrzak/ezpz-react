@@ -20,15 +20,17 @@ routes.forEach((
 ) => {
   router.get(
     route.path,
-    (
+    async (
       req: Request,
       res: Response,
     ) => {
-      res.send(renderToString(
+      const html = renderToString(
         <App title={(route?.title || config?.app_name) ?? ''}>
-          {route.Component()}
+          {await route.Component()}
         </App>
-      ).replace('__script_injection__', scriptLoader))
+      ).replace('__script_injection__', scriptLoader)
+
+      res.send(html)
     },
   )
 })
