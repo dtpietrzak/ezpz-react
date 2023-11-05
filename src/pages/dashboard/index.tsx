@@ -2,7 +2,7 @@ import { PageConfig } from "ezpz"
 
 export const config: PageConfig = {}
 
-const Home = () => {
+const DashboardHome = () => {
   // const [text, setText] = useState<string>("")
 
   return (
@@ -20,4 +20,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default DashboardHome

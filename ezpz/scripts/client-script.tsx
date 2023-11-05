@@ -2,9 +2,8 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 
-import { RouterProvider } from 'react-router-dom'
-
 import { router } from '../../bundle/routes_for_router'
+import Providers from '../../build/Providers'
 
 const div = document.getElementById('app-root')
 
@@ -16,11 +15,10 @@ if (
   flushSync(() => {
     root.render(
       <React.StrictMode>
-        <RouterProvider router={router!} />
+        <Providers />
       </React.StrictMode>
     )
   })
-  console.log('client script loaded')
 } else {
   throw new Error('Could not find app-root div')
 }

@@ -57,7 +57,7 @@ const invalid_file_names = [
   'scripts',
 ]
 
-// @ts-expect-error - this is a hack to get the type of the routes object
+// @ts-ignore - this is a hack to get the type of the routes object
 export let routes_raw: RawRoutesFromJson = {}
 
 function generatePathsConfig(dir: string) {
@@ -108,9 +108,7 @@ function generatePathsConfig(dir: string) {
   return paths_obj
 }
 
-
 routes_raw = generatePathsConfig('src/pages') as RawRoutesFromJson
-
 
 fs.writeFileSync(
   'bundle/routes_raw.json',
@@ -198,6 +196,7 @@ fs.writeFileSync(
 )
 
 let react_router_routes: any = []
+let server_side_render_imports: any = []
 let react_router_imports: any = []
 
 const generateImportsForReactRouter = (routes_object: any) => {
@@ -221,6 +220,31 @@ const generateImportsForReactRouter = (routes_object: any) => {
     }
   }
 }
+
+const generateImportsForServerSideRender = async (routes_object: any) => {
+  const routes_array = Object.entries(routes_object)
+
+  for (let i = 0; i < routes_array.length; i++) {
+    if (typeof routes_array[i][1] === 'string') {
+      const _route_string = routes_array[i][1] as string
+
+      const component_name = _route_string.substring(1, _route_string.length - 1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('') + 'Index'
+
+      const component_file_path = `'../build/ssr/pages${_route_string.concat('index')}'`
+
+      // we're a string, so we're a route
+      server_side_render_imports.push(
+        `import ${component_name}, { config as ${component_name}_config, loadFunctions as ${component_name}_loadFunctions } from ${component_file_path}`
+      )
+    } else {
+      // we're an object, so we're a directory
+      generateImportsForServerSideRender(routes_array[i][1])
+    }
+  }
+}
+
+generateImportsForReactRouter(routes_raw)
+generateImportsForServerSideRender(routes_raw)
 
 const generateRoutesForReactRouter = async (routes_object: any) => {
   const routes_array = Object.entries(routes_object)
@@ -249,7 +273,6 @@ const generateRoutesForReactRouter = async (routes_object: any) => {
   }
 }
 
-generateImportsForReactRouter(routes_raw)
 generateRoutesForReactRouter(routes_raw)
 
 const react_router_file_content = `
@@ -269,7 +292,7 @@ export const routes = [
 ]
 
 // init and export router
-export const router = null //  isClient ? createBrowserRouter(routes) : null;
+export const router = isClient ? createBrowserRouter(routes) : null;
 `
 
 fs.writeFileSync(
@@ -277,6 +300,81 @@ fs.writeFileSync(
   react_router_file_content,
 )
 
+const server_side_render_routes_file_content = `
 
+// import the routes
+${server_side_render_imports.join('\n')}
+
+// route type
+export type Route = {
+  name: string
+  path: string
+  Component: any
+  title?: string
+  loadFunctions: {
+    name: string
+    function: any
+  }[]
+}
+
+// router array
+export const routes: Route[] = [
+  ${react_router_routes.map((x) => `{
+    name: '${x.Component}',
+    path: '${x.path}',
+    Component: ${x.Component},
+    title: ${x.title},
+    loadFunctions: ${x.Component}_loadFunctions,
+  }`).join(',\n  ')}
+] as unknown as Route[]
+`
+
+fs.writeFileSync(
+  'bundle/routes_for_ssr.tsx',
+  server_side_render_routes_file_content,
+)
+
+import { routes as ssr_routes } from '../../bundle/routes_for_ssr'
+
+const new_ssr_imports = ssr_routes.map((route) => {
+  return `import ${route.name}, { config as ${route.name}_config${route.loadFunctions.map((x) => `, ${x} as ${route.name}_loadFunctions_${x}`).join('')
+    } } from "../build/ssr/pages${route.path}index"`
+}).join('\n')
+
+const server_side_render_routes_file_content_w_loadFunctions = `
+// import the routes
+${new_ssr_imports}
+
+// route type
+export type Route = {
+  name: string
+  path: string
+  Component: any
+  title?: string
+  loadFunctions: {
+    name: string
+    function: any
+  }[]
+}
+
+// router array
+export const routes: Route[] = [
+  ${ssr_routes.map((x) => `{
+    name: '${x.name}',
+    path: '${x.path}',
+    Component: ${x.name},
+    title: ${x.name}_config.title,
+    loadFunctions: [${x.loadFunctions.map((y) => `{
+      name: '${y}',
+      function: ${x.name}_loadFunctions_${y},
+    }`).join(', ')}]
+  }`).join(',\n  ')}
+]
+`
+
+fs.writeFileSync(
+  'bundle/routes_for_ssr.tsx',
+  server_side_render_routes_file_content_w_loadFunctions,
+)
 
 export default routes as Routes

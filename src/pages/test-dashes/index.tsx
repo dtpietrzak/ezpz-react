@@ -2,7 +2,7 @@ import { PageConfig, useNavigate, useState, Page } from "ezpz"
 
 export const config: PageConfig = {}
 
-const Home = () => {
+const TestDashes = () => {
   const navigate = useNavigate()
   const [text, setText] = useState<string>("")
 
@@ -26,4 +26,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default TestDashes
