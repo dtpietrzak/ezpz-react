@@ -1,4 +1,4 @@
-import { PageConfig } from "ezpz"
+import { PageConfig } from "ezpz/types"
 
 export const config: PageConfig = {}
 

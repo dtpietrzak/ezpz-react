@@ -1,4 +1,5 @@
-import { PageConfig, useNavigate, useState, Page } from "ezpz"
+import { useNavigate, useState, Page } from "ezpz"
+import { PageConfig } from 'ezpz/types'
 
 export const config: PageConfig = {}
 

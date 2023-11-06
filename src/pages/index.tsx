@@ -5,23 +5,13 @@ import {
   Link,
   Page,
   LoadHandler,
-  PageConfig,
-  FPC,
-  LoadStatus,
 } from 'ezpz'
+import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button';
 
 export const config: PageConfig = {
   title: 'Home',
   description: 'Home page description',
-}
-
-function timeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-const SomeOtherThing = () => {
-  return 'wow';
 }
 
 // you could make a provider that allows you to jump down levels
@@ -36,22 +26,41 @@ const Home = () => {
   const [text, setText] = useState<string>("wow")
 
   const [value, updateValue, statusOfValue] = useServer<string>('value', {
-    loadFunction: async () => {
-      await timeout(2000);
-      return {
-        data: new Date().toISOString(),
-        status: 'success' as LoadStatus,
-      }
-    },
-    updateFunction: async (data) => {
-      await timeout(2000)
-      return {
-        data: typeof data === 'string' ? data : 'test',
-        status: 'success',
-      }
-    },
+    loadFunction: async () => (
+      (await fetch('http://localhost:3000/api')).json()
+    ),
+    updateFunction: async (data) => (
+      (await fetch('http://localhost:3000/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: data
+        })
+      })).json()
+    ),
   }, {
     loadOn: 'server'
+  })
+
+  const [poop, updatePoop, statusOfPoop] = useServer<string>('value', {
+    loadFunction: async () => (
+      (await fetch('http://localhost:3000/api')).json()
+    ),
+    updateFunction: async (data) => (
+      (await fetch('http://localhost:3000/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: data
+        })
+      })).json()
+    ),
+  }, {
+    loadOn: 'client'
   })
 
   useEffect(() => {
@@ -67,7 +76,7 @@ const Home = () => {
         name="editor"
         rows={10}
         cols={80}
-        value={text}
+        value={text + poop}
         onChange={(e) => setText(e.target.value)}
       />
       <button

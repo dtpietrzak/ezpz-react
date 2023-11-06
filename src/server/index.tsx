@@ -1,14 +1,21 @@
-import express, { Router } from 'express'
+import express, { Router, Request, Response } from 'express'
+import bodyParser from 'body-parser'
+import { LoadStatus, ServerResponse } from 'ezpz/types'
 import ezpz_router, { sendPage } from '../../ezpz/server'
-import { routes } from '../../bundle/routes_for_ssr'
+import { middleware } from './middleware'
+// import { routes } from '../../bundle/routes_for_ssr'
 
 console.log('\n\n\nezpz loading...\n')
 
 // const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
 const port = 3000
 const app = express()
+app.use('/scripts', express.static(`${__dirname}/../../bundle/`))
+app.use(express.json())
+
 const router = Router()
-app.use('/scripts', express.static(`${__dirname}/../bundle/`))
+
+router.use(middleware)
 
 // Insert your API routes below here
 
@@ -18,6 +25,29 @@ app.use('/scripts', express.static(`${__dirname}/../bundle/`))
 //   console.log('what if i dont res.send?')
 //   sendPage(routes[0], res)
 // })
+
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+let message = 'test'
+
+router.get('/api', async (req: Request, res: Response) => {
+  await timeout(500)
+  res.send({
+    data: message,
+    status: 'success' as LoadStatus,
+  })
+})
+
+router.post('/api', async (req: Request, res: Response) => {
+  await timeout(500)
+  message = req.body.message
+  res.send({
+    data: message,
+    status: 'success' as LoadStatus,
+  })
+})
 
 // Insert your API routes above here
 router.use(ezpz_router)

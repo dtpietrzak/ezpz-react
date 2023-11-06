@@ -301,7 +301,7 @@ fs.writeFileSync(
 )
 
 const server_side_render_routes_file_content = `
-
+// @ts-nocheck
 // import the routes
 ${server_side_render_imports.join('\n')}
 

@@ -5,7 +5,7 @@
   "scripts": {
     "work": "npm run build-setup && npm run gen-routes && npm run gen-ssr-components",
     "dev": "nodemon",
-    "dev-stuff": "npm run build-setup && npm run gen-routes && npm run gen-ssr-components && npm run gen-bundle && node --loader ts-node/esm src/server/index.tsx",
+    "dev-stuff": "npm run build-setup && npm run gen-ssr-components && npm run gen-routes && npm run gen-bundle && node --loader ts-node/esm src/server/index.tsx",
     "build": "node --loader ts-node/esm ezpz/build.ts",
     "start": "node --loader ts-node/esm ezpz/run.ts",
     "build-setup": "node --loader ts-node/esm ezpz/scripts/build-setup.ts",

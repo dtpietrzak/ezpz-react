@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 
 import { router } from '../../bundle/routes_for_router'
-import Providers from '../../build/Providers'
+import Provider from '../tools/components/Provider'
 
 const div = document.getElementById('app-root')
 
@@ -15,7 +15,7 @@ if (
   flushSync(() => {
     root.render(
       <React.StrictMode>
-        <Providers />
+        <Provider />
       </React.StrictMode>
     )
   })

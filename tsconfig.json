@@ -22,9 +22,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "ezpz/dev.tsx",
-    "ezpz/server.tsx",
-    "ezpz/build.ts",
+    "ezpz/**/*.ts",
+    "ezpz/**/*.tsx",
     "bundle/**/*.ts",
     "bundle/**/*.tsx",
     "build/ssr/**/*.ts",

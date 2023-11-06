@@ -20,12 +20,17 @@ function readDirRecursive(dirPath: string) {
       if (filePath.endsWith('layout.tsx')) return
       if (filePath.includes('_helpers')) return
 
+      const newFilePath = filePath.replace('./src/', './build/ssr/')
+      const newFilePathDir = newFilePath.replace(file, '')
+
       if (filePath.includes('_components')) {
-        fs.copyFileSync(filePath, filePath.replace('./src/', './build/ssr/'))
+        if (!fs.existsSync(newFilePathDir)) {
+          fs.mkdirSync(newFilePathDir, { recursive: true })
+        }
+        fs.copyFileSync(filePath, newFilePath)
         return
       }
-
-      const newFilePath = filePath.replace('./src/', './build/ssr/')
+      
       const component = parseComponent(filePath)
 
       if (typeof component?.uci !== 'string') return
@@ -50,12 +55,9 @@ function readDirRecursive(dirPath: string) {
           'useServerAsync',
         )
 
-      const newFilePathDir = newFilePath.replace(file, '')
-
       if (!fs.existsSync(newFilePathDir)) {
         fs.mkdirSync(newFilePathDir, { recursive: true })
       }
-
       fs.writeFileSync(
         newFilePath,
         awaitedUseServers,
@@ -65,8 +67,3 @@ function readDirRecursive(dirPath: string) {
 }
 
 readDirRecursive('./src')
-
-
-
-
-export default 'poop'

@@ -9,7 +9,6 @@ import { config } from 'ezpz.config'
 
 const router = Router()
 
-
 export const sendPage = async (route: Route, res: Response) => {
   const funcEntries = await Promise.all(route.loadFunctions
     .map(async (lf: any) => {

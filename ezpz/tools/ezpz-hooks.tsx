@@ -3,18 +3,12 @@ import {
   useEffect as RUseEffect,
   useContext as RUseContext,
 } from 'react'
-import { DataContext } from '../../build/Providers'
-import { LoadStatus } from './ezpz-components'
+import { DataContext } from './components/Provider'
+import { ErrorMessage, LoadStatus, ServerFunction, UseServerOptions, UseServerAsyncOptions, ServerFunctions, UseServerReturn } from 'ezpz/types'
 import { isClient, isServer } from './ezpz-utils'
 import { useLocation } from './react-router-dom-wrappers'
 
-export type ErrorMessage = string
 
-export type ServerFunction<T> = (data?: React.SetStateAction<T>) => Promise<{
-  data?: T,
-  error?: ErrorMessage,
-  status: LoadStatus,
-}>
 
 export const useServerData = isClient ?
   () => RUseContext(DataContext)
@@ -47,29 +41,15 @@ export const useServerData = isClient ?
 export const useServer = <T,>(
   initialState: T,
   {
-    loadFunction,
-    updateFunction,
-  }: {
-    loadFunction: ServerFunction<T>
-    updateFunction?: ServerFunction<T>
-  },
+    loadFunction, updateFunction,
+  }: ServerFunctions<T>,
   {
-    loadOn = 'client',
-    serverLoadAt = 'runtime',
-    updateAs = 'optimistic',
-  }: {
-    loadOn?: 'server' | 'client'
-    serverLoadAt?: 'compile' | 'runtime'
-    updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
-  }
-): [
-    T,
-    | React.Dispatch<React.SetStateAction<T>>
-    | ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
-    LoadStatus,
-  ] => {
-  // @ts-expect-error
-  const init = typeof window !== 'undefined' ? window.__initial_data__ : undefined
+    loadOn = 'client', serverLoadAt = 'runtime', updateAs = 'optimistic',
+  }: UseServerOptions,
+): UseServerReturn<T> => {
+  const init = typeof window !== 'undefined' ?
+    // @ts-expect-error
+    window.__initial_data__ : undefined
 
   const [state, setState] = RUseState(
     init?.[initialState] ?? initialState
@@ -81,6 +61,7 @@ export const useServer = <T,>(
   let _error: ErrorMessage | undefined
 
   const updateState = async (data: React.SetStateAction<T>) => {
+    const lastData = state
 
     if (updateAs === 'client-only') {
       setState(data)
@@ -98,12 +79,13 @@ export const useServer = <T,>(
             setState(updatedData ?? data)
           }
           if (status === 'error' && updateAs === 'optimistic') {
-            setState(initialState)
+            setState(lastData)
           }
           setStatus(status)
           _error = error
         })
         .catch((error) => {
+          setState(lastData)
           setStatus('error')
           _error = error
         })
@@ -155,30 +137,14 @@ export const useServer = <T,>(
 
 export const useServerAsync = async <T,>(
   initialState: T,
+  { 
+    loadFunction, updateFunction,
+  }: ServerFunctions<T>,
   {
-    loadFunction,
-    updateFunction,
-  }: {
-    loadFunction: ServerFunction<T>
-    updateFunction?: ServerFunction<T>
-  },
-  {
-    loadOn = 'client',
-    serverLoadAt = 'runtime',
-    updateAs = 'optimistic',
-    serverInit,
-  }: {
-    loadOn?: 'server' | 'client'
-    serverLoadAt?: 'compile' | 'runtime'
-    updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
-    serverInit?: any
-  }
-): Promise<[
-  T,
-  | React.Dispatch<React.SetStateAction<T>>
-  | ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
-  LoadStatus,
-]> => {
+    loadOn = 'client', serverLoadAt = 'runtime',
+    updateAs = 'optimistic', serverInit,
+  }: UseServerAsyncOptions,
+): Promise<UseServerReturn<T>> => {
 
   if (isServer && (loadOn !== 'client')) {
     if (serverLoadAt === 'compile') {
@@ -199,7 +165,7 @@ export const useServerAsync = async <T,>(
 
       const { data, status, error } = await loadFunction()
 
-      return [data ?? initialState, () => initialState, status]
+      return [(data as T) ?? (initialState as T), (() => initialState as T), status]
     }
   } else if (isClient && (loadOn !== 'server')) {
     // client - runtime
