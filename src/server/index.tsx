@@ -15,7 +15,7 @@ app.use(express.json())
 
 const router = Router()
 
-router.use(middleware)
+// router.use(middleware)
 
 // Insert your API routes below here
 
@@ -33,7 +33,8 @@ function timeout(ms) {
 let message = 'test'
 
 router.get('/api', async (req: Request, res: Response) => {
-  await timeout(500)
+  await timeout(250)
+  console.log('message: ', message)
   res.send({
     data: message,
     status: 'success' as LoadStatus,
@@ -41,8 +42,9 @@ router.get('/api', async (req: Request, res: Response) => {
 })
 
 router.post('/api', async (req: Request, res: Response) => {
-  await timeout(500)
+  await timeout(250)
   message = req.body.message
+  console.log('message: ', message)
   res.send({
     data: message,
     status: 'success' as LoadStatus,

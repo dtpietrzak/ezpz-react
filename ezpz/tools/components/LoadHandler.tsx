@@ -1,4 +1,4 @@
-import { HTMLProps, FC } from 'react'
+import { HTMLProps, FC, Suspense } from 'react'
 import { LoadStatus } from 'ezpz/types'
 
 interface LoadHandlerProps extends HTMLProps<HTMLDivElement> {
@@ -19,21 +19,26 @@ export const LoadHandler: FC<LoadHandlerProps> = ({
 }: LoadHandlerProps) => {
   return (
     <div {...props}>
-      {
+      <Suspense fallback={
         status === 'init' ?
-          init ? init : loading
-          :
-          status === 'loading' ?
-            loading
+          init ? init : loading : loading
+      }>
+        {
+          status === 'init' ?
+            init ? init : loading
             :
-            status === 'success' ?
-              success
+            status === 'loading' ?
+              loading
               :
-              status === 'error' ?
-                error ? error : loading
+              status === 'success' ?
+                success
                 :
-                null
-      }
+                status === 'error' ?
+                  error ? error : loading
+                  :
+                  null
+        }
+      </Suspense>
     </div>
   )
 }

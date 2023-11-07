@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import raw_routes_from_json from '../../bundle/routes_raw.json'
+import { mergeDeep, toCamelCase } from './helpers'
 
 type PascalCase<S extends string> = string extends S
   ? string
@@ -115,44 +116,7 @@ fs.writeFileSync(
   JSON.stringify(routes_raw, null, 2),
 )
 
-/**
- * Simple object check.
- * @param item
- * @returns {boolean}
- */
-export function isObject(item: object): boolean {
-  return (item && typeof item === 'object' && !Array.isArray(item))
-}
 
-/**
- * Deep merge two objects.
- * @param target
- * @param ...sources
- */
-export function mergeDeep(target: any, ...sources: any) {
-  if (!sources.length) return target
-  const source = sources.shift()
-
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} })
-        mergeDeep(target[key], source[key])
-      } else {
-        Object.assign(target, { [key]: source[key] })
-      }
-    }
-  }
-
-  return mergeDeep(target, ...sources)
-}
-
-// a function to convert a string like 'hello-world' to 'helloWorld'
-const toCamelCase = (str: string) => {
-  return str.replace(/-([a-z])/g, function (g) {
-    return g[1].toUpperCase()
-  })
-}
 
 // @ts-ignore
 let routes: Routes = null
@@ -208,7 +172,7 @@ const generateImportsForReactRouter = (routes_object: any) => {
 
       const component_name = _route_string.substring(1, _route_string.length - 1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('') + 'Index'
 
-      const component_file_path = `'../src/pages${_route_string.concat('index')}'`
+      const component_file_path = `'../build/csr/pages${_route_string.concat('index')}'`
 
       // we're a string, so we're a route
       react_router_imports.push(
@@ -234,7 +198,12 @@ const generateImportsForServerSideRender = async (routes_object: any) => {
 
       // we're a string, so we're a route
       server_side_render_imports.push(
-        `import ${component_name}, { config as ${component_name}_config, loadFunctions as ${component_name}_loadFunctions } from ${component_file_path}`
+        `import ${component_name}, { 
+  config as ${component_name}_config, 
+  loadFunctionNames as ${component_name}_loadFunctionNames,
+  loadFunctionUIDs as ${component_name}_loadFunctionUIDs,
+  loadFunctionInitIds as ${component_name}_loadFunctionInitIds,
+} from ${component_file_path}\n`
       )
     } else {
       // we're an object, so we're a directory
@@ -264,7 +233,7 @@ const generateRoutesForReactRouter = async (routes_object: any) => {
       react_router_routes.push({
         path: _route_string,
         Component: component_name,
-        title: component_name + '_config.title',
+        config: component_name + '_config',
       })
     } else {
       // we're an object, so we're a directory
@@ -287,7 +256,7 @@ export const routes = [
   ${react_router_routes.map((x) => `{
     path: '${x.path}',
     Component: ${x.Component},
-    title: ${x.title},
+    config: ${x.config},
   }`).join(',\n  ')}
 ]
 
@@ -303,59 +272,39 @@ fs.writeFileSync(
 const server_side_render_routes_file_content = `
 // @ts-nocheck
 // import the routes
+import { TempSsrRoute } from 'ezpz/types'
 ${server_side_render_imports.join('\n')}
 
-// route type
-export type Route = {
-  name: string
-  path: string
-  Component: any
-  title?: string
-  loadFunctions: {
-    name: string
-    function: any
-  }[]
-}
-
 // router array
-export const routes: Route[] = [
+export const routes: TempSsrRoute[] = [
   ${react_router_routes.map((x) => `{
     name: '${x.Component}',
     path: '${x.path}',
     Component: ${x.Component},
-    title: ${x.title},
-    loadFunctions: ${x.Component}_loadFunctions,
+    config: ${x.config},
+    loadFunctionNames: ${x.Component}_loadFunctionNames,
+    loadFunctionUIDs: ${x.Component}_loadFunctionUIDs,
+    loadFunctionInitIds: ${x.Component}_loadFunctionInitIds,
   }`).join(',\n  ')}
-] as unknown as Route[]
+] as unknown as TempSsrRoute[]
 `
 
 fs.writeFileSync(
-  'bundle/routes_for_ssr.tsx',
+  'bundle/routes_for_ssr__temp.tsx',
   server_side_render_routes_file_content,
 )
 
-import { routes as ssr_routes } from '../../bundle/routes_for_ssr'
+import { routes as ssr_routes } from '../../bundle/routes_for_ssr__temp'
 
 const new_ssr_imports = ssr_routes.map((route) => {
-  return `import ${route.name}, { config as ${route.name}_config${route.loadFunctions.map((x) => `, ${x} as ${route.name}_loadFunctions_${x}`).join('')
+  return `import ${route.name}, { config as ${route.name}_config${route.loadFunctionNames.map((x) => `, ${x} as ${route.name}_loadFunctions_${x}`).join('')
     } } from "../build/ssr/pages${route.path}index"`
 }).join('\n')
 
 const server_side_render_routes_file_content_w_loadFunctions = `
 // import the routes
+import { Route } from 'ezpz/types'
 ${new_ssr_imports}
-
-// route type
-export type Route = {
-  name: string
-  path: string
-  Component: any
-  title?: string
-  loadFunctions: {
-    name: string
-    function: any
-  }[]
-}
 
 // router array
 export const routes: Route[] = [
@@ -363,9 +312,10 @@ export const routes: Route[] = [
     name: '${x.name}',
     path: '${x.path}',
     Component: ${x.name},
-    title: ${x.name}_config.title,
-    loadFunctions: [${x.loadFunctions.map((y) => `{
+    config: ${x.name}_config,
+    loadFunctions: [${x.loadFunctionNames.map((y, i) => `{
       name: '${y}',
+      uid: '${x.loadFunctionUIDs[i]}',
       function: ${x.name}_loadFunctions_${y},
     }`).join(', ')}]
   }`).join(',\n  ')}

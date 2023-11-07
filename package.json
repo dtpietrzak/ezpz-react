@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "work": "npm run build-setup && npm run gen-routes && npm run gen-ssr-components",
+    "work": "npm run build-setup && npm run gen-routes && npm run gen-components",
     "dev": "nodemon",
-    "dev-stuff": "npm run build-setup && npm run gen-ssr-components && npm run gen-routes && npm run gen-bundle && node --loader ts-node/esm src/server/index.tsx",
+    "dev-stuff": "npm run build-setup && npm run gen-components && npm run gen-routes && npm run gen-bundle && node --loader ts-node/esm src/server/index.tsx",
     "build": "node --loader ts-node/esm ezpz/build.ts",
     "start": "node --loader ts-node/esm ezpz/run.ts",
     "build-setup": "node --loader ts-node/esm ezpz/scripts/build-setup.ts",
     "gen-routes": "node --loader ts-node/esm ezpz/scripts/build-routes.ts",
-    "gen-ssr-components": "node --loader ts-node/esm ezpz/scripts/build-ssr-components.tsx",
+    "gen-components": "node --loader ts-node/esm ezpz/scripts/build-components.tsx",
     "gen-bundle": "node esbuild.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -47,6 +47,7 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.2.2",
-    "uglify-js": "^3.17.4"
+    "uglify-js": "^3.17.4",
+    "uuid": "^9.0.1"
   }
 }

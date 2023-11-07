@@ -1,6 +1,5 @@
 import {
   useState,
-  useEffect,
   useServer,
   Link,
   Page,
@@ -32,40 +31,13 @@ const Home = () => {
     updateFunction: async (data) => (
       (await fetch('http://localhost:3000/api', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: data
-        })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: data})
       })).json()
     ),
   }, {
-    loadOn: 'server'
+    loadOn: 'server',
   })
-
-  const [poop, updatePoop, statusOfPoop] = useServer<string>('value', {
-    loadFunction: async () => (
-      (await fetch('http://localhost:3000/api')).json()
-    ),
-    updateFunction: async (data) => (
-      (await fetch('http://localhost:3000/api', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: data
-        })
-      })).json()
-    ),
-  }, {
-    loadOn: 'client'
-  })
-
-  useEffect(() => {
-    console.log(text, value, 'from useEffect')
-  }, [text, value])
 
   return (
     <Page config={config}>
@@ -76,7 +48,7 @@ const Home = () => {
         name="editor"
         rows={10}
         cols={80}
-        value={text + poop}
+        value={text}
         onChange={(e) => setText(e.target.value)}
       />
       <button

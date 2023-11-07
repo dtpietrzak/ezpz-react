@@ -38,24 +38,29 @@ export const useServerData = isClient ?
 //     work this way, regardless of these settings.
 // 
 
+let initSsrComplete = false
+
 export const useServer = <T,>(
   initialState: T,
   {
     loadFunction, updateFunction,
   }: ServerFunctions<T>,
   {
-    loadOn = 'client', serverLoadAt = 'runtime', updateAs = 'optimistic',
+    loadOn = 'client', serverLoadAt = 'runtime', 
+    updateAs = 'optimistic', serverInitId,
   }: UseServerOptions,
 ): UseServerReturn<T> => {
   const init = typeof window !== 'undefined' ?
     // @ts-expect-error
     window.__initial_data__ : undefined
+  
+  const ssrInit = (serverInitId ? init?.[serverInitId] : undefined)
 
   const [state, setState] = RUseState(
-    init?.[initialState] ?? initialState
+    ssrInit ?? initialState
   )
   const [status, setStatus] = RUseState<LoadStatus>(
-    init?.[initialState] ? 'success' : 'init'
+    ssrInit ? 'success' : 'init'
   )
 
   let _error: ErrorMessage | undefined
@@ -102,14 +107,17 @@ export const useServer = <T,>(
     RUseEffect(() => {
       let ignore = false
 
-      if (init?.[initialState]) return
+      if (ssrInit && !initSsrComplete) {
+        initSsrComplete = true
+        return
+      }
 
       setStatus('loading')
       loadFunction()
         .then(({ data, status, error }) => {
           if (!ignore) {
             if (status === 'success') {
-              setState(data ?? initialState)
+              setState(data ?? ssrInit ?? initialState)
             }
             setStatus(status)
             _error = error
@@ -123,7 +131,7 @@ export const useServer = <T,>(
         })
 
       return () => { ignore = true }
-    }, [])
+    }, [location.pathname])
 
     return [
       state,
@@ -132,7 +140,7 @@ export const useServer = <T,>(
     ]
   }
 
-  return [init?.test ?? initialState, updateState, status]
+  return [ssrInit ?? initialState, updateState, status]
 }
 
 export const useServerAsync = async <T,>(
@@ -142,7 +150,7 @@ export const useServerAsync = async <T,>(
   }: ServerFunctions<T>,
   {
     loadOn = 'client', serverLoadAt = 'runtime',
-    updateAs = 'optimistic', serverInit,
+    serverInit, serverInitId,
   }: UseServerAsyncOptions,
 ): Promise<UseServerReturn<T>> => {
 

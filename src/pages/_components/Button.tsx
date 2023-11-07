@@ -7,7 +7,6 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
 
   const [value, updateValue, statusOfValue] = useServer('testInit', {
     loadFunction: async () => {
-      console.log(`a button loaded on the ${isClient ? 'client' : 'server'} on page: ${location}`)
       return { status: 'success' }
     }
   }, {})

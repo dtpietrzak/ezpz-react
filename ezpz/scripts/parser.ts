@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { parse } from '@babel/parser'
-import { transformFromAstSync } from '@babel/core'
+import { v4 as uuidv4 } from 'uuid'
 import {
   Node,
   Identifier,
@@ -15,6 +15,7 @@ export const parseComponent = (filePath: string) => {
     .replace('.tsx', '')
     .replace(new RegExp(/\//g), '_')
     .replace('index', '')
+    .replace('-', '_')
 
   const ast = parse(fileContents, {
     sourceType: "module",
@@ -103,6 +104,7 @@ export const parseComponent = (filePath: string) => {
 
   const componentLoadFunctions: string[] = []
   const componentLoadFunctionNames: string[] = []
+  const componentLoadFunctionUIDs: string[] = []
   const componentLoadFunctionInitInserts: number[] = []
 
   // @ts-expect-error
@@ -133,11 +135,14 @@ export const parseComponent = (filePath: string) => {
 
         if (!loadOnServer) return
 
+        const lf_cui = `lf_${uuidv4().replaceAll('-', '_')}`
+
         node.declarations[0].init.arguments[1].properties.forEach((prop) => {
           if (prop.key.name === 'loadFunction') {
-            componentLoadFunctionNames.push(`${uci}${variables[0].name}`)
+            componentLoadFunctionNames.push(`${variables[0].name}`)
+            componentLoadFunctionUIDs.push(lf_cui)
             componentLoadFunctions.push(
-              `export const ${uci}${variables[0].name} = ${componentCode.substring(prop.value.start, prop.value.end)}`
+              `export const ${variables[0].name} = ${componentCode.substring(prop.value.start, prop.value.end)}`
             )
           }
         })
@@ -149,33 +154,15 @@ export const parseComponent = (filePath: string) => {
     }
   })
 
-  componentLoadFunctionInitInserts
-    .sort((a, b) => b - a)
-    .forEach((insert, i) => {
-      fileContents = addStringAtIndex(
-        fileContents,
-        `\n    serverInit: ${componentLoadFunctionNames[componentLoadFunctionNames.length - i - 1]}_init,`,
-        insert + 1,
-      )
-    })
-
-  const newFileContents = [fileContents, componentLoadFunctions.join('\n\n')].join('\n\n').concat(`\n\nexport const loadFunctions = ${JSON.stringify(componentLoadFunctionNames)}`)
-
   return {
     defaultExportName,
     uci,
-    newFileContents,
+    fileContents,
+    loadFunctions: componentLoadFunctions,
+    loadFunctionInserts: componentLoadFunctionInitInserts,
     loadFunctionNames: componentLoadFunctionNames,
+    loadFunctionUIDs: componentLoadFunctionUIDs,
   }
-}
-
-// make a function to add a string to another string starting at a certain index
-function addStringAtIndex(
-  originalString: string,
-  stringToAdd: string,
-  index: number,
-): string {
-  return originalString.slice(0, index) + stringToAdd + originalString.slice(index);
 }
 
 export default parseComponent

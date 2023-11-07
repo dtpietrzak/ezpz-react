@@ -1,11 +1,1 @@
-export const scriptLoader = `
-window.onload = function() {
-  var script = document.createElement('script');
-  script.src = '/scripts/bundle.js';
-  script.id = 'bundle-loader';
-  script.async = true;
-  script.defer = true;
-  console.log(script);
-  document.body.appendChild(script);
-}
-`
+export default `window.onload=function(){var e=document.createElement("script");e.src="/scripts/bundle.js",e.async=!0,e.defer=!0,document.body.appendChild(e)};`

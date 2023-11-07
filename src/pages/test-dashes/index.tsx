@@ -1,11 +1,25 @@
-import { useNavigate, useState, Page } from "ezpz"
+import { useNavigate, useState, Page, useServer } from "ezpz"
 import { PageConfig } from 'ezpz/types'
 
 export const config: PageConfig = {}
 
 const TestDashes = () => {
   const navigate = useNavigate()
-  const [text, setText] = useState<string>("")
+
+  const [value, updateValue, statusOfValue] = useServer<string>('value', {
+    loadFunction: async () => (
+      (await fetch('http://localhost:3000/api')).json()
+    ),
+    updateFunction: async (data) => (
+      (await fetch('http://localhost:3000/api', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: data})
+      })).json()
+    ),
+  }, {
+    loadOn: 'server',
+  })
 
   return (
     <Page config={config}>
@@ -15,8 +29,7 @@ const TestDashes = () => {
         name="editor"
         rows={10}
         cols={80}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={value}
       />
       <button 
         onClick={() => navigate(-1)}

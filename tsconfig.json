@@ -28,6 +28,8 @@
     "bundle/**/*.tsx",
     "build/ssr/**/*.ts",
     "build/ssr/**/*.tsx",
+    "build/csr/**/*.ts",
+    "build/csr/**/*.tsx",
   ],
   "exclude": [
     "node_modules",
