@@ -6,6 +6,8 @@ import {
   Identifier,
 } from '@babel/types'
 
+const devDefinedInitIdUnique: Map<string, string> = new Map()
+
 export const parseComponent = (filePath: string) => {
   let fileContents = fs.readFileSync(filePath, 'utf8')
 
@@ -40,23 +42,6 @@ export const parseComponent = (filePath: string) => {
         defaultExportName = node.declaration.loc?.identifierName
       }
     }
-
-    // if (node.type === 'ExportNamedDeclaration') {
-    //   if (!(node.declaration as VariableDeclaration)?.[0]?.id?.name) return
-    //   if (!node.start) return
-    //   if (!node.end) return
-
-    //   // @ts-expect-error
-    //   functions[node.declaration.declarations?.[0]?.id.name] = {
-    //     // @ts-expect-error
-    //     name: node.declaration.declarations?.[0]?.id.name,
-    //     type: node.type,
-    //     content: fileContents.substring(
-    //       node.start,
-    //       node.end,
-    //     )
-    //   }
-    // }
 
     if (node.type === 'FunctionDeclaration') {
       if (!node.id) return
@@ -106,6 +91,7 @@ export const parseComponent = (filePath: string) => {
   const componentLoadFunctionNames: string[] = []
   const componentLoadFunctionUIDs: string[] = []
   const componentLoadFunctionInitInserts: number[] = []
+  let loadOnServer: boolean = false
 
   // @ts-expect-error
   componentAst.program.body[0].declarations[0].init.body.body.forEach((node) => {
@@ -115,15 +101,19 @@ export const parseComponent = (filePath: string) => {
         const variables = node.declarations[0].id.elements
         const capped_var_1_name = variables[0].name.charAt(0).toUpperCase() + variables[0].name.slice(1)
 
-        if (variables[1].name !== `update${capped_var_1_name}`) {
-          throw new Error('an update function name is incorrect')
+        if (variables[1].name !== `setLocal${capped_var_1_name}`) {
+          throw new Error('a local setter function name is incorrect: must start with setLocal')
         }
 
-        if (variables[2].name !== `statusOf${capped_var_1_name}`) {
+        if (variables[2].name !== `setServer${capped_var_1_name}`) {
+          throw new Error('a local setter function name is incorrect: must start with setServer')
+        }
+
+        if (variables[3].name !== `statusOf${capped_var_1_name}`) {
           throw new Error('a status value name is incorrect')
         }
 
-        let loadOnServer: boolean = false
+        let devDefinedInitId: string
 
         node.declarations[0].init.arguments[2].properties.some((prop) => {
           if (prop.key.name === 'loadOn') {
@@ -131,16 +121,28 @@ export const parseComponent = (filePath: string) => {
               loadOnServer = true
             }
           }
+          if (prop.key.name === 'serverInitId') {
+            if (typeof prop.value.value === 'string') {
+              // regex throw an error if prop.value.value could not be used as a function name in javascript
+              if (!prop.value.value.match(/^[a-zA-Z_$][0-9a-zA-Z_$]*$/)) {
+                throw new Error(`serverInitId must be a string that could resolve to valid function name, see: ${defaultExportName} / ${prop.value.value}`)
+              }
+              devDefinedInitIdUnique.set(prop.value.value, defaultExportName)
+              devDefinedInitId = prop.value.value
+            } else {
+              throw new Error(`serverInitId must be a string, see: ${defaultExportName}`)
+            }
+          }
         })
 
-        if (!loadOnServer) return
-
         const lf_cui = `lf_${uuidv4().replaceAll('-', '_')}`
-
+        
         node.declarations[0].init.arguments[1].properties.forEach((prop) => {
           if (prop.key.name === 'loadFunction') {
             componentLoadFunctionNames.push(`${variables[0].name}`)
-            componentLoadFunctionUIDs.push(lf_cui)
+            componentLoadFunctionUIDs.push(
+              devDefinedInitId ? `__dev_defined__${devDefinedInitId}` : lf_cui
+            )
             componentLoadFunctions.push(
               `export const ${variables[0].name} = ${componentCode.substring(prop.value.start, prop.value.end)}`
             )
@@ -162,6 +164,7 @@ export const parseComponent = (filePath: string) => {
     loadFunctionInserts: componentLoadFunctionInitInserts,
     loadFunctionNames: componentLoadFunctionNames,
     loadFunctionUIDs: componentLoadFunctionUIDs,
+    loadOnServer: loadOnServer,
   }
 }
 

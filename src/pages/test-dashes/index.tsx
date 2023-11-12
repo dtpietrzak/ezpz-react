@@ -6,20 +6,22 @@ export const config: PageConfig = {}
 const TestDashes = () => {
   const navigate = useNavigate()
 
-  const [value, updateValue, statusOfValue] = useServer<string>('value', {
-    loadFunction: async () => (
-      (await fetch('http://localhost:3000/api')).json()
-    ),
-    updateFunction: async (data) => (
-      (await fetch('http://localhost:3000/api', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message: data})
-      })).json()
-    ),
-  }, {
-    loadOn: 'server',
-  })
+  const [value, setLocalValue, setServerValue, statusOfValue] =
+    useServer<string>('value', {
+      loadFunction: async () => (
+        (await fetch('http://localhost:3000/api')).json()
+      ),
+      updateFunction: async (data) => (
+        (await fetch('http://localhost:3000/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: data })
+        })).json()
+      ),
+    }, {
+      serverInitId: 'poop_nug',
+      loadOn: 'server',
+    })
 
   return (
     <Page config={config}>
@@ -31,7 +33,7 @@ const TestDashes = () => {
         cols={80}
         value={value}
       />
-      <button 
+      <button
         onClick={() => navigate(-1)}
       >
         Back

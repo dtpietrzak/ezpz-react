@@ -3,20 +3,20 @@ import {
   useEffect as RUseEffect,
   useContext as RUseContext,
 } from 'react'
-import { DataContext } from './components/Provider'
+// import { DataContext } from './components/Provider'
 import { ErrorMessage, LoadStatus, ServerFunction, UseServerOptions, UseServerAsyncOptions, ServerFunctions, UseServerReturn } from 'ezpz/types'
 import { isClient, isServer } from './ezpz-utils'
 import { useLocation } from './react-router-dom-wrappers'
 
 
 
-export const useServerData = isClient ?
-  () => RUseContext(DataContext)
-  :
-  () => ({
-    data: {},
-    updateData: (newData: Record<string, unknown>) => { },
-  })
+// export const useServerData = isClient ?
+//   () => RUseContext(DataContext)
+//   :
+//   () => ({
+//     data: undefined,
+//     updateData: (newData: Record<string, unknown>) => { },
+//   })
 
 // render options
 // 
@@ -38,7 +38,11 @@ export const useServerData = isClient ?
 //     work this way, regardless of these settings.
 // 
 
+// @ts-expect-error
+let init = typeof window !== 'undefined' ? window.__initial_data__ : undefined
 let initSsrComplete = false
+let cache = new Map<string, any>()
+
 
 export const useServer = <T,>(
   initialState: T,
@@ -46,51 +50,66 @@ export const useServer = <T,>(
     loadFunction, updateFunction,
   }: ServerFunctions<T>,
   {
-    loadOn = 'client', serverLoadAt = 'runtime', 
+    loadOn = 'client', serverLoadAt = 'runtime',
     updateAs = 'optimistic', serverInitId,
   }: UseServerOptions,
 ): UseServerReturn<T> => {
-  const init = typeof window !== 'undefined' ?
-    // @ts-expect-error
-    window.__initial_data__ : undefined
-  
-  const ssrInit = (serverInitId ? init?.[serverInitId] : undefined)
+  const location = useLocation()
+  let initFromServer = false
 
-  const [state, setState] = RUseState(
-    ssrInit ?? initialState
-  )
+  // if server has an init ID for this state
+  if (serverInitId) {
+    initFromServer = true
+    // check if it's already been cached
+    if (cache.has(serverInitId)) {
+      // if so, override the init object for this serverInitId
+      init[serverInitId] = cache.get(serverInitId)
+    }
+    // override internal initial state with server state
+    initialState = init[serverInitId]
+  }
+
+  const [state, setLocalState] = RUseState(initialState)
+
   const [status, setStatus] = RUseState<LoadStatus>(
-    ssrInit ? 'success' : 'init'
+    initFromServer ? 'success' : 'init'
   )
 
   let _error: ErrorMessage | undefined
 
-  const updateState = async (data: React.SetStateAction<T>) => {
+  const setServerState = async (data?: React.SetStateAction<T>) => {
+    if (typeof data === 'undefined') data = state
     const lastData = state
 
     if (updateAs === 'client-only') {
-      setState(data)
+      setLocalState(data)
       setStatus('success')
       return
     }
 
-    if (updateAs === 'optimistic') setState(data)
+    if (updateAs === 'optimistic') {
+      if (serverInitId) cache.set(serverInitId, data)
+      setLocalState(data)
+    }
     setStatus('loading')
 
     if (updateFunction) {
       updateFunction(data)
         .then(({ data: updatedData, status, error }) => {
           if (status === 'success' && updateAs === 'pessimistic') {
-            setState(updatedData ?? data)
+            if (serverInitId) cache.set(serverInitId, (updatedData ?? data))
+            setLocalState(updatedData ?? data ?? initialState)
           }
           if (status === 'error' && updateAs === 'optimistic') {
-            setState(lastData)
+            if (serverInitId) cache.set(serverInitId, lastData)
+            setLocalState(lastData)
           }
           setStatus(status)
           _error = error
         })
         .catch((error) => {
-          setState(lastData)
+          if (serverInitId) cache.set(serverInitId, lastData)
+          setLocalState(lastData)
           setStatus('error')
           _error = error
         })
@@ -98,86 +117,57 @@ export const useServer = <T,>(
     return _error
   }
 
-  if (isClient) {
-    // client - runtime
 
-    const location = useLocation()
-    const { updateData } = useServerData()
 
-    RUseEffect(() => {
-      let ignore = false
 
-      if (ssrInit && !initSsrComplete) {
-        initSsrComplete = true
-        return
-      }
+  RUseEffect(() => {
+    let ignore = false
 
-      setStatus('loading')
-      loadFunction()
-        .then(({ data, status, error }) => {
-          if (!ignore) {
-            if (status === 'success') {
-              setState(data ?? ssrInit ?? initialState)
-            }
-            setStatus(status)
-            _error = error
+    if (initFromServer && !initSsrComplete) {
+      initSsrComplete = true
+      return
+    }
+
+    setStatus('loading')
+    loadFunction()
+      .then(({ data, status, error }) => {
+        if (!ignore) {
+          if (status === 'success') {
+            if (serverInitId) cache.set(serverInitId, data)
+            setLocalState(data ?? initialState)
           }
-        })
-        .catch((error) => {
-          if (!ignore) {
-            setStatus('error')
-            _error = error
-          }
-        })
+          setStatus(status)
+          _error = error
+        }
+      })
+      .catch((error) => {
+        if (!ignore) {
+          setStatus('error')
+          _error = error
+        }
+      })
 
-      return () => { ignore = true }
-    }, [location.pathname])
+    return () => { ignore = true }
+  }, [location.pathname])
 
-    return [
-      state,
-      updateState,
-      status,
-    ]
-  }
+  return [
+    state,
+    setLocalState,
+    setServerState,
+    status,
+  ]
 
-  return [ssrInit ?? initialState, updateState, status]
 }
 
-export const useServerAsync = async <T,>(
+export const useServerAsync = <T,>(
   initialState: T,
-  { 
+  {
     loadFunction, updateFunction,
   }: ServerFunctions<T>,
   {
     loadOn = 'client', serverLoadAt = 'runtime',
     serverInit, serverInitId,
   }: UseServerAsyncOptions,
-): Promise<UseServerReturn<T>> => {
-
-  if (isServer && (loadOn !== 'client')) {
-    if (serverLoadAt === 'compile') {
-      // server - compile
-
-      // TODO: compile time server render
-      console.error('compile time server render not yet implemented and is not considered a priority')
-
-      return [
-        initialState,
-        () => initialState,
-        'success',
-      ]
-    } else {
-      // server - runtime
-
-      if (serverInit) return [serverInit, () => serverInit, 'success']
-
-      const { data, status, error } = await loadFunction()
-
-      return [(data as T) ?? (initialState as T), (() => initialState as T), status]
-    }
-  } else if (isClient && (loadOn !== 'server')) {
-    // client - runtime
-  }
-
-  return [initialState, () => initialState, 'success']
+): UseServerReturn<T> => {
+  return [serverInit, () => serverInit, () => serverInit, 'success']
 }

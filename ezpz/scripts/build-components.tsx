@@ -17,7 +17,6 @@ function readDirRecursive(dirPath: string) {
       readDirRecursive(filePath)
     } else {
       if (!filePath.endsWith('.tsx')) return
-      if (filePath.endsWith('layout.tsx')) return
       if (filePath.includes('_helpers')) return
 
       const newFilePath_ssr = filePath.replace('./src/', './build/ssr/')
@@ -26,6 +25,18 @@ function readDirRecursive(dirPath: string) {
       const newFilePath_Dir_csr = newFilePath_csr.replace(file, '')
 
       if (filePath.includes('_components')) {
+        if (!fs.existsSync(newFilePath_Dir_ssr)) {
+          fs.mkdirSync(newFilePath_Dir_ssr, { recursive: true })
+        }
+        if (!fs.existsSync(newFilePath_Dir_csr)) {
+          fs.mkdirSync(newFilePath_Dir_csr, { recursive: true })
+        }
+        fs.copyFileSync(filePath, newFilePath_ssr)
+        fs.copyFileSync(filePath, newFilePath_csr)
+        return
+      }
+
+      if (filePath.endsWith('layout.tsx')) {
         if (!fs.existsSync(newFilePath_Dir_ssr)) {
           fs.mkdirSync(newFilePath_Dir_ssr, { recursive: true })
         }
@@ -46,19 +57,23 @@ function readDirRecursive(dirPath: string) {
       let ssrFileContents = component.fileContents
       let csrFileContents = component.fileContents
 
+      // remove any serverInitIds that are already in the file
+      ssrFileContents = ssrFileContents.replace(/serverInitId: ['"\`]\w+['"\`][,?]/g, '')
+      csrFileContents = csrFileContents.replace(/serverInitId: ['"\`]\w+['"\`][,?]/g, '')
+
       // this is adding the serverInit prop to the useServerAsync Options
       component.loadFunctionInserts
         .sort((a, b) => b - a)
         .forEach((insert, i) => {
           ssrFileContents = addStringAtIndex(
             ssrFileContents,
-            `\n    serverInit: ${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]},\n    serverInitId: '${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]}',`,
+            `\n      serverInit: ${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]},\n      serverInitId: '${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]}',`,
             insert + 1,
           )
 
           csrFileContents = addStringAtIndex(
             csrFileContents,
-            `\n    serverInitId: '${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]}',`,
+            `\n      serverInitId: '${component.loadFunctionUIDs[component.loadFunctionUIDs.length - i - 1]}',`,
             insert + 1,
           )
         })
@@ -69,17 +84,21 @@ function readDirRecursive(dirPath: string) {
       const addedAsync = addedLoadFunctionData
         .replace(
           new RegExp(`const ${component.defaultExportName}(.*)= \\((.*)\\) => {`),
-          `const ${component.defaultExportName}$1= async (${component.loadFunctionUIDs.map((x) => `${x}?: any`).join(',')}) => {`,
+          // `const ${component.defaultExportName}$1= async (${component.loadFunctionUIDs.map((x) => `${x}?: any`).join(',')}) => {`,
+          `const ${component.defaultExportName}$1= (${component.loadFunctionUIDs.map((x) => `${x}?: any`).join(',')}) => {`,
         ).replace(
           new RegExp(`export default function ${component.defaultExportName}\\((.*)\\) {`),
-          `export default async function ${component.defaultExportName}($1) {`,
+          // `export default async function ${component.defaultExportName}($1) {`,
+          `export default function ${component.defaultExportName}($1) {`,
         )
 
       const modifiedUseServerCallsToUseServerAsync = addedAsync
         .replace(
-          /const \[(.*), (.*), (.*)\] = useServer(.*)\(/g,
-          'const [$1, $2, $3] = await useServer$4(',
-        ).replace(
+          /const\s*\[(.*),\s*(.*),\s*(.*),\s*(.*)\]\s*=\s*useServer(.*)\(/g,
+          // 'const [$1, $2, $3, $4] = await useServer$5(',
+          'const [$1, $2, $3, $4] = useServer$5(',
+        )
+        .replace(
           /useServer/g,
           'useServerAsync',
         )

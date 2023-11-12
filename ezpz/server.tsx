@@ -1,9 +1,10 @@
 import { renderToString } from 'react-dom/server'
 import { Request, Response, Router } from 'express'
 import App from '../app'
-import { routes } from '../bundle/routes_for_ssr'
+import { routes } from '../build/routing/routes_for_ssr'
 import scriptLoader from './scripts/script-loader'
 import { Route } from 'ezpz/types'
+import BasicLayout from 'src/pages/layout'
 
 // const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
 
@@ -20,9 +21,21 @@ export const sendPage = async (route: Route, res: Response) => {
   const dataArray = funcEntries.map(([_, data]) => data)
   const funcObject = Object.fromEntries(funcEntries)
 
+  const WithLayouts = () => {
+    if (!route.Layouts || route.Layouts.length === 0) {
+      return route.Component(...dataArray)
+    } else {
+      return route.Layouts.reduce((acc, Layout) => {
+        if (!Layout) return acc
+        return (<Layout>{acc}</Layout>)
+      }, route.Component(...dataArray)
+      )
+    }
+  }
+
   const html = renderToString(
     <App pageConfig={route.config}>
-      {await route.Component(...dataArray)}
+      {WithLayouts()}
     </App>
   ).replace('__script_injection__', scriptLoader)
 

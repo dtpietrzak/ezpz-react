@@ -1,3 +1,5 @@
+import { FC } from "react"
+
 export type PageConfig = {
   title?: string
   description?: string
@@ -10,14 +12,14 @@ export type ErrorMessage = string
 
 export type LoadStatus = 'init' | 'loading' | 'success' | 'error'
 
-export type ServerResponse<T = unknown> = {
+export type ServerResponse<T> = {
   data?: T,
   error?: ErrorMessage,
   status: LoadStatus,
 }
 
-export type ServerFunction<T = unknown> =
-  (data?: React.SetStateAction<T>) => Promise<ServerResponse>
+export type ServerFunction<T> =
+  (data?: React.SetStateAction<T>) => Promise<ServerResponse<T>>
 
 export type ServerFunctions<T> = {
   loadFunction: ServerFunction<T>
@@ -47,8 +49,9 @@ export type UseServerAsyncOptions = {
 
 export type UseServerReturn<T> = [
   T,
-  | React.Dispatch<React.SetStateAction<T>>
-  | ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
+  React.Dispatch<React.SetStateAction<T>>,
+  React.Dispatch<React.SetStateAction<T>> | 
+  ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
   LoadStatus,
 ]
 
@@ -65,6 +68,7 @@ export type Route = {
   name: string
   path: string
   Component: any
+  Layouts: any[],
   config?: PageConfig
   loadFunctions: {
     // this is the name of the value getter of the useServer hook (ex: value)

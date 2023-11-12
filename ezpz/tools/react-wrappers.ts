@@ -14,3 +14,5 @@ export type FPC<P = {}> = React.FunctionComponent<P> | AsyncFunctionComponent<P>
 export const useState = (typeof window !== 'undefined' ? React.useState : (val: any) => [val, () => {}]) as typeof React.useState
 
 export const useEffect = (typeof window !== 'undefined' ? React.useEffect : () => {}) as typeof React.useEffect
+
+export const useMemo = (typeof window !== 'undefined' ? React.useMemo : (fn: () => any) => fn()) as typeof React.useMemo

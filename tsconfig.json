@@ -26,10 +26,8 @@
     "ezpz/**/*.tsx",
     "bundle/**/*.ts",
     "bundle/**/*.tsx",
-    "build/ssr/**/*.ts",
-    "build/ssr/**/*.tsx",
-    "build/csr/**/*.ts",
-    "build/csr/**/*.tsx",
+    "build/**/*.ts",
+    "build/**/*.tsx",
   ],
   "exclude": [
     "node_modules",

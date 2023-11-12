@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import raw_routes_from_json from '../../bundle/routes_raw.json'
+import raw_routes_from_json from '../../build/routing/routes_raw.json'
 import { mergeDeep, toCamelCase } from './helpers'
 
 type PascalCase<S extends string> = string extends S
@@ -112,7 +112,7 @@ function generatePathsConfig(dir: string) {
 routes_raw = generatePathsConfig('src/pages') as RawRoutesFromJson
 
 fs.writeFileSync(
-  'bundle/routes_raw.json',
+  'build/routing/routes_raw.json',
   JSON.stringify(routes_raw, null, 2),
 )
 
@@ -155,7 +155,7 @@ export const generatePathsFromPathsConfig = (path_object: any, previous_level?: 
 if (routes === null) routes = generatePathsFromPathsConfig(routes_raw)
 
 fs.writeFileSync(
-  'bundle/routes.json',
+  'build/routing/routes.json',
   JSON.stringify(routes, null, 2),
 )
 
@@ -163,7 +163,7 @@ let react_router_routes: any = []
 let server_side_render_imports: any = []
 let react_router_imports: any = []
 
-const generateImportsForReactRouter = (routes_object: any) => {
+const generateImportsForCSR = (routes_object: any) => {
   const routes_array = Object.entries(routes_object)
 
   for (let i = 0; i < routes_array.length; i++) {
@@ -172,7 +172,7 @@ const generateImportsForReactRouter = (routes_object: any) => {
 
       const component_name = _route_string.substring(1, _route_string.length - 1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('') + 'Index'
 
-      const component_file_path = `'../build/csr/pages${_route_string.concat('index')}'`
+      const component_file_path = `'../csr/pages${_route_string.concat('index')}'`
 
       // we're a string, so we're a route
       react_router_imports.push(
@@ -180,12 +180,12 @@ const generateImportsForReactRouter = (routes_object: any) => {
       )
     } else {
       // we're an object, so we're a directory
-      generateImportsForReactRouter(routes_array[i][1])
+      generateImportsForCSR(routes_array[i][1])
     }
   }
 }
 
-const generateImportsForServerSideRender = async (routes_object: any) => {
+const generateImportsForSSR = async (routes_object: any) => {
   const routes_array = Object.entries(routes_object)
 
   for (let i = 0; i < routes_array.length; i++) {
@@ -194,7 +194,7 @@ const generateImportsForServerSideRender = async (routes_object: any) => {
 
       const component_name = _route_string.substring(1, _route_string.length - 1).split('/').map((x) => toCamelCase(x.charAt(0).toUpperCase() + x.slice(1))).join('') + 'Index'
 
-      const component_file_path = `'../build/ssr/pages${_route_string.concat('index')}'`
+      const component_file_path = `'../ssr/pages${_route_string.concat('index')}'`
 
       // we're a string, so we're a route
       server_side_render_imports.push(
@@ -207,15 +207,15 @@ const generateImportsForServerSideRender = async (routes_object: any) => {
       )
     } else {
       // we're an object, so we're a directory
-      generateImportsForServerSideRender(routes_array[i][1])
+      generateImportsForSSR(routes_array[i][1])
     }
   }
 }
 
-generateImportsForReactRouter(routes_raw)
-generateImportsForServerSideRender(routes_raw)
+generateImportsForCSR(routes_raw)
+generateImportsForSSR(routes_raw)
 
-const generateRoutesForReactRouter = async (routes_object: any) => {
+const generateRoutesForCSR = async (routes_object: any) => {
   const routes_array = Object.entries(routes_object)
 
   for (let i = 0; i < routes_array.length; i++) {
@@ -237,16 +237,18 @@ const generateRoutesForReactRouter = async (routes_object: any) => {
       })
     } else {
       // we're an object, so we're a directory
-      generateRoutesForReactRouter(routes_array[i][1])
+      generateRoutesForCSR(routes_array[i][1])
     }
   }
 }
 
-generateRoutesForReactRouter(routes_raw)
+generateRoutesForCSR(routes_raw)
 
-const react_router_file_content = `
+const csr_file_content = `
 import { createBrowserRouter } from "react-router-dom"
 import { isClient } from "ezpz"
+import BasicLayout from '../ssr/pages/layout'
+
 
 // import the routes
 ${react_router_imports.join('\n')}
@@ -256,6 +258,8 @@ export const routes = [
   ${react_router_routes.map((x) => `{
     path: '${x.path}',
     Component: ${x.Component},
+    Layouts: [BasicLayout],
+    layoutsHash: 'fslahkjdslfkhjalksdjha',
     config: ${x.config},
   }`).join(',\n  ')}
 ]
@@ -265,11 +269,36 @@ export const router = isClient ? createBrowserRouter(routes) : null;
 `
 
 fs.writeFileSync(
-  'bundle/routes_for_router.tsx',
-  react_router_file_content,
+  'build/routing/routes_for_csr.tsx',
+  csr_file_content,
 )
 
-const server_side_render_routes_file_content = `
+const csr_routes_map = `
+import BasicLayout from '../ssr/pages/layout'
+
+// build the routes map
+const routes_map = new Map([
+  ${react_router_routes.map((x) => `[
+    '${x.path}', 
+    {
+      path: '${x.path}',
+      // Component: ${x.Component},
+      Layouts: [BasicLayout],
+      layoutsHash: 'fslahkjdslfkhjalksdjha',
+      // config: ${x.config},
+    }
+  ]`).join(',\n  ')}
+])
+
+export default routes_map
+`
+
+fs.writeFileSync(
+  'build/routing/routes_for_csr__map.tsx',
+  csr_routes_map,
+)
+
+const ssr_routes_file_content = `
 // @ts-nocheck
 // import the routes
 import { TempSsrRoute } from 'ezpz/types'
@@ -290,21 +319,23 @@ export const routes: TempSsrRoute[] = [
 `
 
 fs.writeFileSync(
-  'bundle/routes_for_ssr__temp.tsx',
-  server_side_render_routes_file_content,
+  'build/routing/routes_for_ssr__temp.tsx',
+  ssr_routes_file_content,
 )
 
-import { routes as ssr_routes } from '../../bundle/routes_for_ssr__temp'
+// @ts-ignore
+import { routes as ssr_routes } from '../../build/routing/routes_for_ssr__temp'
 
 const new_ssr_imports = ssr_routes.map((route) => {
   return `import ${route.name}, { config as ${route.name}_config${route.loadFunctionNames.map((x) => `, ${x} as ${route.name}_loadFunctions_${x}`).join('')
-    } } from "../build/ssr/pages${route.path}index"`
+    } } from "../ssr/pages${route.path}index"`
 }).join('\n')
 
-const server_side_render_routes_file_content_w_loadFunctions = `
+const ssr_routes_file_content_w_loadFunctions = `
 // import the routes
 import { Route } from 'ezpz/types'
 ${new_ssr_imports}
+import BasicLayout from '../ssr/pages/layout'
 
 // router array
 export const routes: Route[] = [
@@ -312,6 +343,7 @@ export const routes: Route[] = [
     name: '${x.name}',
     path: '${x.path}',
     Component: ${x.name},
+    Layouts: [BasicLayout],
     config: ${x.name}_config,
     loadFunctions: [${x.loadFunctionNames.map((y, i) => `{
       name: '${y}',
@@ -323,8 +355,8 @@ export const routes: Route[] = [
 `
 
 fs.writeFileSync(
-  'bundle/routes_for_ssr.tsx',
-  server_side_render_routes_file_content_w_loadFunctions,
+  'build/routing/routes_for_ssr.tsx',
+  ssr_routes_file_content_w_loadFunctions,
 )
 
 export default routes as Routes

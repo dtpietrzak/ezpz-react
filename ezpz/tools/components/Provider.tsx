@@ -1,36 +1,37 @@
-import React, { createContext, useState, useMemo, useCallback, FC } from "react"
+import { createContext, useState, useMemo, useCallback, FC } from "react"
 
 import { RouterProvider } from 'react-router-dom'
 
-import { router } from '../../../bundle/routes_for_router'
+import { router, routes } from '../../../build/routing/routes_for_csr'
+import Layouts from './Layouts'
 
-export const DataContext = createContext({
-  data: {},
-  updateData: (key: string, newData: Record<string, unknown>) => { },
-})
+// export const DataContext = createContext({
+//   data: {},
+//   updateData: (key: string, newData: Record<string, unknown>) => { },
+// })
 
 const Provider: FC = () => {
-  const [data, setData] = useState({})
+  // const [data, setData] = useState({})
 
-  const updateData = useCallback((
-    key: string,
-    newData: Record<string, unknown>,
-  ) => {
-    setData((prevData) => ({
-      ...prevData,
-      [key]: newData,
-    }))
-  }, [])
+  // const updateData = useCallback((
+  //   key: string,
+  //   newData: Record<string, unknown>,
+  // ) => {
+  //   setData((prevData) => ({
+  //     ...prevData,
+  //     [key]: newData,
+  //   }))
+  // }, [])
 
-  const dataValue = useMemo(() => ({
-    data,
-    updateData,
-  }), [data, updateData])
+  // const dataValue = useMemo(() => ({
+  //   data,
+  //   updateData,
+  // }), [data, updateData])
 
   return (
-    <DataContext.Provider value={dataValue}>
+    <Layouts>
       <RouterProvider router={router!} />
-    </DataContext.Provider>
+    </Layouts>
   )
 }
 

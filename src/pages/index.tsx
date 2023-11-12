@@ -4,6 +4,7 @@ import {
   Link,
   Page,
   LoadHandler,
+  useEffect,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button';
@@ -17,30 +18,34 @@ export const config: PageConfig = {
 // add an option to useServer, like "contextKey"
 // this has to be unique across the entire app
 // then you can use that to jump down levels like:
-// const [value, updateValue, statusOfValue] = useServerData<string>('contextKey')
+// const [value, setLocalValue, setServerValue, statusOfValue] = useServerData<string>('contextKey')
 
-// need to make a rule, whenever you use a server rendered useServer
-// the initial value has to be the same as the server rendered value name
 const Home = () => {
   const [text, setText] = useState<string>("wow")
 
-  const [value, updateValue, statusOfValue] = useServer<string>('value', {
-    loadFunction: async () => (
-      (await fetch('http://localhost:3000/api')).json()
-    ),
-    updateFunction: async (data) => (
-      (await fetch('http://localhost:3000/api', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message: data})
-      })).json()
-    ),
-  }, {
-    loadOn: 'server',
-  })
+  useEffect(() => {
+    console.log(text)
+  }, [text])
+
+  const [value, setLocalValue, setServerValue, statusOfValue] =
+    useServer<string>('value', {
+      loadFunction: async () => (
+        (await fetch('http://localhost:3000/api')).json()
+      ),
+      updateFunction: async (data) => (
+        (await fetch('http://localhost:3000/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: data })
+        })).json()
+      ),
+    }, {
+      serverInitId: 'poop_nug',
+      loadOn: 'server',
+    })
 
   return (
-    <Page config={config}>
+    <Page config={config} id='page_comp'>
       <h1>Home</h1>
       <h2>Value: {value}</h2>
       <textarea
@@ -51,16 +56,18 @@ const Home = () => {
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <button
-        onClick={() => console.log("clicked")}
-      >
-        <Link to="/test-dashes/">Test Dashes</Link>
-      </button>
+      <Link to="/test-dashes/">Test Dashes</Link>
       <Button
-        onClick={() => updateValue(text)}
+        onClick={() => setLocalValue(text)}
         disabled={statusOfValue !== 'success'}
       >
-        Test out the updater
+        Update Locally
+      </Button>
+      <Button
+        onClick={() => setServerValue(text)}
+        disabled={statusOfValue !== 'success'}
+      >
+        Update Server
       </Button>
       <LoadHandler
         status={statusOfValue}

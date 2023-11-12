@@ -30,7 +30,7 @@ function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-let message = 'test'
+let message = 'poop nugget'
 
 router.get('/api', async (req: Request, res: Response) => {
   await timeout(250)
