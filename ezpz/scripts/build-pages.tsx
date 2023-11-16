@@ -64,7 +64,9 @@ const buildPages = async (): Promise<void> => {
             .update(fileContents)
             .digest('hex')
 
-          if (cache_history[filePath] === file_hash) return
+          if (cache_history[filePath] === file_hash) {
+            return
+          }
 
           const component = parseComponent(filePath, fileContents)
 

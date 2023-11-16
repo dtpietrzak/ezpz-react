@@ -24,7 +24,7 @@ export const config: PageConfig = {
 
 const Home = () => {
   const [text, setText] = useSkipServer(
-    useState('test'),
+    useState('test_thing'),
     ['string', () => { }],
   )
 

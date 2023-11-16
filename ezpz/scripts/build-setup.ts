@@ -36,6 +36,13 @@ const buildSetup = async (): Promise<void> => {
       )
     }
 
+    if (!fs.existsSync('build/cache/routes.json')) {
+      fs.writeFileSync(
+        'build/cache/routes.json',
+        '{}',
+      )
+    }
+
     if (!fs.existsSync('build/routing/routes_raw.json')) {
       fs.writeFileSync(
         'build/routing/routes_raw.json',

@@ -1,4 +1,5 @@
 import { FC, useMemo, useEffect, useState } from "react"
+// @ts-ignore
 import layouts_map from "build/layouts/layouts"
 
 let observer: MutationObserver

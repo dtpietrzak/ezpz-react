@@ -6,14 +6,7 @@
   "scripts": {
     "work": "npm run build-setup && npm run gen-routes && npm run gen-components",
     "dev": "node --loader ts-node/esm ezpz/dev.ts",
-    "dev2": "npm run phase-1 && npm run phase-2 && node --loader ts-node/esm src/server/index.tsx && nodemon",
-    "phase-2": "npm run gen-postcss && npm run gen-bundle",
-    "phase-1": "npm run build-setup && npm run gen-pages && npm run gen-routes && npm run gen-layouts",
-    "build-setup": "node --loader ts-node/esm ezpz/scripts/build-setup.ts",
-    "gen-pages": "node --loader ts-node/esm ezpz/scripts/build-pages.tsx",
-    "gen-routes": "node --loader ts-node/esm ezpz/scripts/build-routes.ts",
-    "gen-layouts": "node --loader ts-node/esm ezpz/scripts/build-layouts.ts",
-    "gen-postcss": "node --loader ts-node/esm ezpz/scripts/build-postcss.ts",
+    "dev-backup": "node --loader ts-node/esm src/server/index.tsx",
     "gen-bundle": "node esbuild.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

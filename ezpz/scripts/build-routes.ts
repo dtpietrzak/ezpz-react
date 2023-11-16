@@ -70,7 +70,7 @@ const buildRoutes = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
     raw_routes_from_json = JSON.parse(fs.readFileSync('build/routing/routes_raw.json', 'utf8'))
 
-    function generatePathsConfig(dir: string) {
+    const generatePathsConfig = (dir: string) => {
       const files = fs.readdirSync(dir)
       const paths_obj = {}
 
@@ -205,14 +205,13 @@ const buildRoutes = async (): Promise<void> => {
           const component_file_path = `'../ssr/pages${_route_string.concat('index')}'`
 
           // we're a string, so we're a route
-          server_side_render_imports.push(
-            `import ${component_name}, { 
-      config as ${component_name}_config, 
-      loadFunctionNames as ${component_name}_loadFunctionNames,
-      loadFunctionUIDs as ${component_name}_loadFunctionUIDs,
-      loadFunctionInitIds as ${component_name}_loadFunctionInitIds,
-      loadFunctionsLoadOnServer as ${component_name}_loadFunctionsLoadOnServer,
-    } from ${component_file_path}\n`
+          server_side_render_imports.push(`import ${component_name}, { 
+  config as ${component_name}_config, 
+  loadFunctionNames as ${component_name}_loadFunctionNames,
+  loadFunctionUIDs as ${component_name}_loadFunctionUIDs,
+  loadFunctionInitIds as ${component_name}_loadFunctionInitIds,
+  loadFunctionsLoadOnServer as ${component_name}_loadFunctionsLoadOnServer,
+} from ${component_file_path}\n`
           )
         } else {
           // we're an object, so we're a directory
@@ -254,50 +253,49 @@ const buildRoutes = async (): Promise<void> => {
     generateRoutesForCSR(routes_raw)
 
     const csr_file_content = `import { RouteCSR } from "ezpz/types"
-    import { isClient } from "ezpz"
-    import { createBrowserRouter } from "react-router-dom"
+import { isClient } from "ezpz"
+import { createBrowserRouter } from "react-router-dom"
+
+// import the routes
+${react_router_imports.join('\n')}
     
-    // import the routes
-    ${react_router_imports.join('\n')}
+// router array
+export const routes: RouteCSR[] = [
+  ${react_router_routes.map((x) => `{
+    path: '${x.path}',
+    Component: ${x.Component},
+    config: ${x.config},
+  }`).join(',\n  ')}
+]
     
-    // router array
-    export const routes: RouteCSR[] = [
-      ${react_router_routes.map((x) => `{
-        path: '${x.path}',
-        Component: ${x.Component},
-        config: ${x.config},
-      }`).join(',\n  ')}
-    ]
-    
-    // init and export router
-    export const router = isClient ? createBrowserRouter(routes) : null;
-    `
+// init and export router
+export const router = isClient ? createBrowserRouter(routes) : null;
+`
 
     fs.writeFileSync(
       'build/routing/routes_for_csr.tsx',
       csr_file_content,
     )
 
-    const ssr_routes_file_content = `
-    // @ts-nocheck
-    // import the routes
-    import { TempSsrRoute } from 'ezpz/types'
-    ${server_side_render_imports.join('\n')}
-    
-    // router array
-    export const routes: TempSsrRoute[] = [
-      ${react_router_routes.map((x) => `{
-        name: '${x.Component}',
-        path: '${x.path}',
-        Component: ${x.Component},
-        config: ${x.config},
-        loadFunctionNames: ${x.Component}_loadFunctionNames,
-        loadFunctionUIDs: ${x.Component}_loadFunctionUIDs,
-        loadFunctionInitIds: ${x.Component}_loadFunctionInitIds,
-        loadFunctionsLoadOnServer: ${x.Component}_loadFunctionsLoadOnServer,
-      }`).join(',\n  ')}
-    ] as unknown as TempSsrRoute[]
-    `
+    const ssr_routes_file_content = `// @ts-nocheck
+// import the routes
+import { TempSsrRoute } from 'ezpz/types'
+${server_side_render_imports.join('\n')}
+
+// router array
+export const routes: TempSsrRoute[] = [
+  ${react_router_routes.map((x) => `{
+    name: '${x.Component}',
+    path: '${x.path}',
+    Component: ${x.Component},
+    config: ${x.config},
+    loadFunctionNames: ${x.Component}_loadFunctionNames,
+    loadFunctionUIDs: ${x.Component}_loadFunctionUIDs,
+    loadFunctionInitIds: ${x.Component}_loadFunctionInitIds,
+    loadFunctionsLoadOnServer: ${x.Component}_loadFunctionsLoadOnServer,
+  }`).join(',\n  ')}
+] as unknown as TempSsrRoute[]
+`
 
     fs.writeFileSync(
       'build/routing/routes_for_ssr__temp.tsx',
