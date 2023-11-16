@@ -4,10 +4,12 @@ import {
   Link,
   Page,
   LoadHandler,
-  useEffect,
+  useSkipServer,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
-import Button from './_components/Button';
+import Button from './_components/Button'
+import { TextInput } from '@mantine/core'
+import { Carousel } from '@mantine/carousel'
 
 export const config: PageConfig = {
   title: 'Home',
@@ -21,11 +23,10 @@ export const config: PageConfig = {
 // const [value, setLocalValue, setServerValue, statusOfValue] = useServerData<string>('contextKey')
 
 const Home = () => {
-  const [text, setText] = useState<string>("wow")
-
-  useEffect(() => {
-    console.log(text)
-  }, [text])
+  const [text, setText] = useSkipServer(
+    useState('test'),
+    ['string', () => { }],
+  )
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
     useServer<string>('value', {
@@ -41,22 +42,23 @@ const Home = () => {
       ),
     }, {
       serverInitId: 'poop_nug',
-      loadOn: 'server',
+      loadOn: 'client',
     })
 
   return (
     <Page config={config} id='page_comp'>
       <h1>Home</h1>
       <h2>Value: {value}</h2>
-      <textarea
+      <TextInput
         id="editor"
         name="editor"
-        rows={10}
-        cols={80}
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <Link to="/test-dashes/">Test Dashes</Link>
+      <div>
+        <Link to="/test-dashes/">Test Dashes</Link>
+        <Link to="/dashboard/">Dashboard</Link>
+      </div>
       <Button
         onClick={() => setLocalValue(text)}
         disabled={statusOfValue !== 'success'}
@@ -76,6 +78,13 @@ const Home = () => {
         success={<div>success!</div>}
         error={<div>error!</div>}
       />
+      <div className='w-64'>
+        <Carousel withIndicators height={200}>
+          <Carousel.Slide>1</Carousel.Slide>
+          <Carousel.Slide>2</Carousel.Slide>
+          <Carousel.Slide>3</Carousel.Slide>
+        </Carousel>
+      </div>
     </Page>
   )
 }

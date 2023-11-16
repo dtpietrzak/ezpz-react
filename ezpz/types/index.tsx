@@ -1,4 +1,5 @@
 import { FC } from "react"
+import { RouteObject } from "react-router-dom"
 
 export type PageConfig = {
   title?: string
@@ -26,25 +27,12 @@ export type ServerFunctions<T> = {
   updateFunction?: ServerFunction<T>
 }
 
-export type UseServerOptionsClient = {
-  loadOn?: 'client'
-  serverInitId?: string
-  serverLoadAt?: 'compile' | 'runtime'
-  updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
-}
-export type UseServerOptionsServer = {
-  loadOn: 'server'
-  serverInitId?: string
-  serverLoadAt?: 'compile' | 'runtime'
-  updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
-}
-export type UseServerOptions = UseServerOptionsClient | UseServerOptionsServer
-export type UseServerAsyncOptions = {
-  loadOn?: 'server' | 'client'
-  serverLoadAt?: 'compile' | 'runtime'
-  updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
+export type UseServerOptions = {
+  loadOn?: 'client' | 'server'
   serverInit?: any
   serverInitId?: string
+  serverLoadAt?: 'compile' | 'runtime'
+  updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
 }
 
 export type UseServerReturn<T> = [
@@ -62,20 +50,25 @@ export type TempSsrRoute = {
   config: PageConfig,
   loadFunctionNames: string[],
   loadFunctionUIDs: string[],
+  loadFunctionsLoadOnServer: boolean[],
 }
 
 export type Route = {
   name: string
   path: string
   Component: any
-  Layouts: any[],
   config?: PageConfig
   loadFunctions: {
     // this is the name of the value getter of the useServer hook (ex: value)
     name: string
     // this is created automatically during compilation
     uid: string
+    loadOnServer: boolean
     // this is the actual load function that is called
     function: any
   }[]
+}
+
+export type RouteCSR = RouteObject & {
+  config: PageConfig,
 }

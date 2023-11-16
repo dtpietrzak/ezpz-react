@@ -2,6 +2,8 @@ import { Meta } from 'ezpz/tools/components/Meta'
 import { PageConfig } from 'ezpz/types'
 import React, { FC } from 'react'
 import config from 'ezpz.config'
+import { ColorSchemeScript } from '@mantine/core'
+import ProvidersForServerAndClient from 'ezpz/tools/components/ProvidersForServerAndClient'
 
 interface AppProps {
   pageConfig?: PageConfig
@@ -17,7 +19,7 @@ const App: FC<AppProps> = ({
   return (
     <html>
       <head>
-        { (title) ? <title>{title}</title> : null }
+        {(title) ? <title>{title}</title> : null}
         <Meta name='description'
           pageValue={pageConfig?.description}
           globalValue={config.global_page_config?.description}
@@ -34,11 +36,15 @@ const App: FC<AppProps> = ({
           pageValue={pageConfig?.viewport}
           globalValue={config.global_page_config?.viewport}
         />
+        <link href="/scripts/bundle.css" rel="stylesheet" />
+        <ColorSchemeScript />
         <script>__script_injection__</script>
       </head>
       <body>
         <div id="app-root">
-          {children}
+          <ProvidersForServerAndClient>
+            {children}
+          </ProvidersForServerAndClient>
         </div>
       </body>
     </html>

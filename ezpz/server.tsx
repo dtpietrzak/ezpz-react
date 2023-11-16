@@ -1,10 +1,15 @@
+process.env.isServer = 'true'
+
+import { Route } from 'ezpz/types'
+
 import { renderToString } from 'react-dom/server'
 import { Request, Response, Router } from 'express'
-import App from '../app'
-import { routes } from '../build/routing/routes_for_ssr'
+import App from '../src/app'
+
 import scriptLoader from './scripts/script-loader'
-import { Route } from 'ezpz/types'
-import BasicLayout from 'src/pages/layout'
+
+import { routes } from 'build/routing/routes_for_ssr'
+import layouts_map from 'build/layouts/layouts'
 
 // const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
 
@@ -15,6 +20,7 @@ const router = Router()
 export const sendPage = async (route: Route, res: Response) => {
   const funcEntries = await Promise.all(
     route.loadFunctions.map(async (lf) => {
+      if (lf.loadOnServer === false) return [lf.uid, undefined]
       return [lf.uid, (await lf.function()).data]
     })
   )
@@ -22,10 +28,10 @@ export const sendPage = async (route: Route, res: Response) => {
   const funcObject = Object.fromEntries(funcEntries)
 
   const WithLayouts = () => {
-    if (!route.Layouts || route.Layouts.length === 0) {
+    if (!layouts_map || layouts_map.has(route.path) === false) {
       return route.Component(...dataArray)
     } else {
-      return route.Layouts.reduce((acc, Layout) => {
+      return layouts_map.get(route.path)?.Layouts.reduce((acc, Layout) => {
         if (!Layout) return acc
         return (<Layout>{acc}</Layout>)
       }, route.Component(...dataArray)

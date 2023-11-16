@@ -1,5 +1,5 @@
 import { FC, useMemo, useEffect, useState } from "react"
-import routes_map from "build/routing/routes_for_csr__map"
+import layouts_map from "build/layouts/layouts"
 
 let observer: MutationObserver
 let oldHref: string
@@ -15,11 +15,11 @@ const Layouts: FC<LayoutsProps> = ({
   const [WithLayouts, setWithLayouts] = useState<React.ReactNode>(null)
 
   useEffect(() => {
-    oldLayoutHash = routes_map
+    oldLayoutHash = layouts_map
       .get(document.location.pathname)?.layoutsHash ?? ''
 
     setWithLayouts(() => {
-      const routes = routes_map.get(document.location.pathname)
+      const routes = layouts_map.get(document.location.pathname)
       if (!routes) return null
       if (!routes.Layouts || routes.Layouts.length === 0) {
         return children
@@ -38,14 +38,14 @@ const Layouts: FC<LayoutsProps> = ({
         oldHref = document.location.href
 
         if (
-          oldLayoutHash !== routes_map
+          oldLayoutHash !== layouts_map
             .get(document.location.pathname)?.layoutsHash
         ) {
-          oldLayoutHash = routes_map
+          oldLayoutHash = layouts_map
             .get(document.location.pathname)?.layoutsHash ?? ''
 
           setWithLayouts(() => {
-            const routes = routes_map.get(document.location.pathname)
+            const routes = layouts_map.get(document.location.pathname)
             if (!routes) return null
             if (!routes.Layouts || routes.Layouts.length === 0) {
               return children

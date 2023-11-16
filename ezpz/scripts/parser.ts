@@ -8,8 +8,7 @@ import {
 
 const devDefinedInitIdUnique: Map<string, string> = new Map()
 
-export const parseComponent = (filePath: string) => {
-  let fileContents = fs.readFileSync(filePath, 'utf8')
+export const parseComponent = (filePath: string, fileContents: string) => {
 
   // uci = unique component identifier
   const uci = filePath
@@ -23,7 +22,6 @@ export const parseComponent = (filePath: string) => {
     sourceType: "module",
     plugins: ["jsx", "typescript"],
   })
-
 
   let defaultExportName: string = ''
   const functions: {
@@ -91,12 +89,12 @@ export const parseComponent = (filePath: string) => {
   const componentLoadFunctionNames: string[] = []
   const componentLoadFunctionUIDs: string[] = []
   const componentLoadFunctionInitInserts: number[] = []
-  let loadOnServer: boolean = false
+  const componentLoadFunctionsLoadOnServer: boolean[] = []
 
   // @ts-expect-error
   componentAst.program.body[0].declarations[0].init.body.body.forEach((node) => {
     if (node.type === 'VariableDeclaration') {
-      if (node.declarations[0].init.callee.name === 'useServer') {
+      if (node.declarations[0].init.callee?.name === 'useServer') {
 
         const variables = node.declarations[0].id.elements
         const capped_var_1_name = variables[0].name.charAt(0).toUpperCase() + variables[0].name.slice(1)
@@ -118,7 +116,9 @@ export const parseComponent = (filePath: string) => {
         node.declarations[0].init.arguments[2].properties.some((prop) => {
           if (prop.key.name === 'loadOn') {
             if (prop.value.value === 'server') {
-              loadOnServer = true
+              componentLoadFunctionsLoadOnServer.push(true)
+            } else {
+              componentLoadFunctionsLoadOnServer.push(false)
             }
           }
           if (prop.key.name === 'serverInitId') {
@@ -164,7 +164,7 @@ export const parseComponent = (filePath: string) => {
     loadFunctionInserts: componentLoadFunctionInitInserts,
     loadFunctionNames: componentLoadFunctionNames,
     loadFunctionUIDs: componentLoadFunctionUIDs,
-    loadOnServer: loadOnServer,
+    loadFunctionsLoadOnServer: componentLoadFunctionsLoadOnServer,
   }
 }
 

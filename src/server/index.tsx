@@ -5,12 +5,17 @@ import ezpz_router, { sendPage } from '../../ezpz/server'
 import { middleware } from './middleware'
 // import { routes } from '../../bundle/routes_for_ssr'
 
-console.log('\n\n\nezpz loading...\n')
-
 // const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
 const port = 3000
 const app = express()
-app.use('/scripts', express.static(`${__dirname}/../../bundle/`))
+app.use(
+  '/scripts',
+  express.static(`${__dirname}/../../bundle/`),
+)
+app.use(
+  '/bundle/main.css',
+  express.static(`${__dirname}/../../bundle/main.css`),
+)
 app.use(express.json())
 
 const router = Router()

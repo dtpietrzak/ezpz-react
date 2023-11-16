@@ -2,15 +2,17 @@ import { createContext, useState, useMemo, useCallback, FC } from "react"
 
 import { RouterProvider } from 'react-router-dom'
 
-import { router, routes } from '../../../build/routing/routes_for_csr'
+// @ts-ignore
+import { router, routes } from 'build/routing/routes_for_csr'
 import Layouts from './Layouts'
+import ProvidersForServerAndClient from "./ProvidersForServerAndClient"
 
 // export const DataContext = createContext({
 //   data: {},
 //   updateData: (key: string, newData: Record<string, unknown>) => { },
 // })
 
-const Provider: FC = () => {
+const ProvidersForClient: FC = () => {
   // const [data, setData] = useState({})
 
   // const updateData = useCallback((
@@ -29,10 +31,12 @@ const Provider: FC = () => {
   // }), [data, updateData])
 
   return (
-    <Layouts>
-      <RouterProvider router={router!} />
-    </Layouts>
+    <ProvidersForServerAndClient>
+      <Layouts>
+        <RouterProvider router={router!} />
+      </Layouts>
+    </ProvidersForServerAndClient>
   )
 }
 
-export default Provider
+export default ProvidersForClient

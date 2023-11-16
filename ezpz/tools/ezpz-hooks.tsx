@@ -1,22 +1,12 @@
 import {
   useState as RUseState,
   useEffect as RUseEffect,
-  useContext as RUseContext,
 } from 'react'
-// import { DataContext } from './components/Provider'
-import { ErrorMessage, LoadStatus, ServerFunction, UseServerOptions, UseServerAsyncOptions, ServerFunctions, UseServerReturn } from 'ezpz/types'
+import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn } from 'ezpz/types'
 import { isClient, isServer } from './ezpz-utils'
+import { nprogress } from '@mantine/nprogress'
 import { useLocation } from './react-router-dom-wrappers'
 
-
-
-// export const useServerData = isClient ?
-//   () => RUseContext(DataContext)
-//   :
-//   () => ({
-//     data: undefined,
-//     updateData: (newData: Record<string, unknown>) => { },
-//   })
 
 // render options
 // 
@@ -51,20 +41,28 @@ export const useServer = <T,>(
   }: ServerFunctions<T>,
   {
     loadOn = 'client', serverLoadAt = 'runtime',
-    updateAs = 'optimistic', serverInitId,
+    updateAs = 'optimistic', serverInitId, serverInit,
   }: UseServerOptions,
 ): UseServerReturn<T> => {
+
+  if (isServer) {
+    return [serverInit, () => serverInit, () => serverInit, 'success']
+  }
+
   const location = useLocation()
   let initFromServer = false
 
-  // if server has an init ID for this state
   if (serverInitId) {
-    initFromServer = true
     // check if it's already been cached
     if (cache.has(serverInitId)) {
       // if so, override the init object for this serverInitId
       init[serverInitId] = cache.get(serverInitId)
     }
+  }
+
+  // if server has an init ID for this state
+  if (serverInitId && init?.[serverInitId]) {
+    initFromServer = true
     // override internal initial state with server state
     initialState = init[serverInitId]
   }
@@ -150,6 +148,11 @@ export const useServer = <T,>(
     return () => { ignore = true }
   }, [location.pathname])
 
+  RUseEffect(() => {
+    if (status === 'loading') nprogress.start()
+    if (status === 'success' || status === 'error') nprogress.complete()
+  }, [status])
+
   return [
     state,
     setLocalState,
@@ -159,15 +162,15 @@ export const useServer = <T,>(
 
 }
 
-export const useServerAsync = <T,>(
-  initialState: T,
-  {
-    loadFunction, updateFunction,
-  }: ServerFunctions<T>,
-  {
-    loadOn = 'client', serverLoadAt = 'runtime',
-    serverInit, serverInitId,
-  }: UseServerAsyncOptions,
-): UseServerReturn<T> => {
-  return [serverInit, () => serverInit, () => serverInit, 'success']
+
+
+
+export const useSkipServer = <T,>(hook: T, serverReturn?: any) => {
+  if (isServer) return serverReturn as T
+  return hook
+}
+
+export const useSkipClient = <T,>(hook: T, clientReturn?: any) => {
+  if (isServer) return clientReturn as T
+  return hook
 }

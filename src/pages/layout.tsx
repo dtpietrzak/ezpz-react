@@ -1,16 +1,57 @@
-import { FC } from "ezpz"
+import { FC, cm } from "ezpz"
+import { Text, Button, Drawer } from "@mantine/core"
+import { modals } from '@mantine/modals'
+import { useDisclosure } from '@mantine/hooks'
 
-const BasicLayout: FC<{children: React.ReactNode}> = ({
+const MainLayout: FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const timestamp = new Date().getTime()
 
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
+
+  const openModal = () => modals.openConfirmModal({
+    title: 'Please confirm your action',
+    children: (
+      <Text size="sm">
+        {timestamp} - is the unix epoch that this layout last rendered at.
+      </Text>
+    ),
+    labels: { confirm: 'Okay', cancel: 'Cancel' },
+    onCancel: () => console.log('Cancel'),
+    onConfirm: () => console.log('Confirmed'),
+  })
+
   return (
-    <div id='layout_component'>
-      <div>header: {timestamp}</div>
+    <div className={cm('w-full h-full bg-slate-800')}>
+      <div className={cm('w-full h-12 bg-slate-700 flex justify-between items-center px-4')}>
+        <div className={cm('text-white flex items-center h-12 text-2xl font-bold align-middle font-mono')}>
+          ezpz
+        </div>
+        <div
+          className={cm('text-white text-2xl font-bold align-middle cursor-pointer')}
+          onClick={openModal}
+        >
+          {timestamp}
+        </div>
+        <Button
+          className={cm('text-white text-2xl font-bold align-middle')}
+          onClick={openDrawer}
+        >
+          menu
+        </Button>
+      </div>
       {children}
+      <Drawer
+        opened={drawerOpened}
+        onClose={closeDrawer}
+        title="Menu"
+        size="md"
+        position="right"
+      >
+      </Drawer>
     </div>
   )
 }
 
-export default BasicLayout
+export default MainLayout
