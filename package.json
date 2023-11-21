@@ -4,10 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "work": "npm run build-setup && npm run gen-routes && npm run gen-components",
-    "dev": "tsx ezpz/dev.tsx",
-    "dev-backup": "node --loader ts-node/esm src/server/index.tsx",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx ezpz/dev.tsx"
   },
   "type": "module",
   "author": "",
