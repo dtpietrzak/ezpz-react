@@ -1,9 +1,8 @@
-
+import * as React from "react"
 import { ButtonHTMLAttributes } from "react"
-import { useServer, isClient, useLocation, FC } from "ezpz"
+import { useLocation, FC } from "ezpz"
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
-  const location = useLocation()
 
   return (
     <button {...props} />

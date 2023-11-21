@@ -1,3 +1,4 @@
+import * as React from 'react'
 import {
   useState,
   useServer,
@@ -24,7 +25,7 @@ export const config: PageConfig = {
 
 const Home = () => {
   const [text, setText] = useSkipServer(
-    useState('test_thing'),
+    useState('test_thi'),
     ['string', () => { }],
   )
 
@@ -38,10 +39,10 @@ const Home = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: data })
-        })).json()
+        })).json() 
       ),
     }, {
-      serverInitId: 'poop_nug',
+      serverInitId: 'example_id',
       loadOn: 'client',
     })
 

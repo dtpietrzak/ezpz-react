@@ -1,75 +1,82 @@
-process.env.isServer = 'true'
-
+import { URL } from 'url'
+import express, { Router, Request, Response, Application, Express } from 'express'
 import { Route } from 'ezpz/types'
+import { port, serverRoutes } from 'src/server'
 
-import { renderToString } from 'react-dom/server'
-import { Request, Response, Router } from 'express'
-import App from '../src/app'
 
-import scriptLoader from './scripts/script-loader'
+let server: ReturnType<Application['listen']> | null = null
 
-import { routes } from 'build/routing/routes_for_ssr'
-import layouts_map from 'build/layouts/layouts'
+const __dirname = new URL('.', import.meta.url).pathname
 
-// const project_root_dir = __dirname.split('/').slice(0, -1).join('/')
+export let router: Router | null = null
+export let app: Express | null = null
 
-// need to update functions to use UID or initIds or something
 
-const router = Router()
-
-export const sendPage = async (route: Route, res: Response) => {
-  const funcEntries = await Promise.all(
-    route.loadFunctions.map(async (lf) => {
-      if (lf.loadOnServer === false) return [lf.uid, undefined]
-      return [lf.uid, (await lf.function()).data]
-    })
+export const prepServer = async () => {
+  router = Router()
+  app = express()
+  app.use(express.json())
+  app.use(
+    '/bundle',
+    express.static(`${__dirname}/../bundle/`),
   )
-  const dataArray = funcEntries.map(([_, data]) => data)
-  const funcObject = Object.fromEntries(funcEntries)
+  app.use(
+    '/bundle/main.css',
+    express.static(`${__dirname}/../bundle/main.css`),
+  )
 
-  const WithLayouts = () => {
-    if (!layouts_map || layouts_map.has(route.path) === false) {
-      return route.Component(...dataArray)
-    } else {
-      return layouts_map.get(route.path)?.Layouts.reduce((acc, Layout) => {
-        if (!Layout) return acc
-        return (<Layout>{acc}</Layout>)
-      }, route.Component(...dataArray)
-      )
-    }
+  await serverRoutes(router)
+}
+
+export const startServer = async () => {
+  app!.use(router!)
+
+  if (!server) {
+    server = app!.listen(port, () => {
+      console.log(`\nApp loaded and listening on port ${port}!`)
+    })
   }
+}
 
-  const html = renderToString(
-    <App pageConfig={route.config}>
-      {WithLayouts()}
-    </App>
-  ).replace('__script_injection__', scriptLoader)
+export const stopServer = async () => {
+  app = null
+  router = null
+  return new Promise((resolve, reject) => {
+    if (server) {
+      server?.close((err) => {
+        if (err) reject(err)
+        server = null
+        console.log('server closed')
+        resolve(true)
+      })
+    } else {
+      reject('server is not defined')
+    }
+  })
+}
 
-  res.send(`${html}
-      <script>
-        window.__initial_data__ = ${JSON.stringify(funcObject)}
-      </script>
-    `)
+type AnyFunction<R = any> = (...args: any[]) => (R | Promise<R>)
+export const restartServer = async (between?: AnyFunction) => {
+  await stopServer()
+  if (between) await between()
+  await startServer()
 }
 
 
-routes.forEach((route) => {
-  router.get(
-    route.path,
-    async (req: Request, res: Response) => {
-      sendPage(route, res)
-    },
-  )
-})
 
 
-// app.get('/*', (req: Request, res: Response) => {
-//   const path = req.path;
 
-//   res.send(renderToString(
-//     <App title={path} />
-//   ).replace('__log_statement__', '\"initial html loaded\"'))
-//   // res.sendFile('index.html', { root: `${__dirname}/../` })
-// })
+export const updateRoutes = async (
+  routeContent: (route: Route) => Promise<string>,
+) => {
+  const routes = (await import('build/routing/routes_for_ssr')).routes
 
-export default router
+  routes.forEach((route) => {
+    router!.get(
+      route.path,
+      async (req: Request, res: Response) => {
+        res.send(await routeContent(route))
+      },
+    )
+  })
+}

@@ -1,4 +1,4 @@
-import { FC, cm } from "ezpz"
+import { FC, cm, useEffect, useState } from "ezpz"
 import { Text, Button, Drawer } from "@mantine/core"
 import { modals } from '@mantine/modals'
 import { useDisclosure } from '@mantine/hooks'
@@ -6,7 +6,11 @@ import { useDisclosure } from '@mantine/hooks'
 const MainLayout: FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const timestamp = new Date().getTime()
+  const [time, setTime] = useState<number>()
+
+  useEffect(() => {
+    setTime(new Date().getTime())
+  }, [])
 
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 
@@ -14,7 +18,7 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
     title: 'Please confirm your action',
     children: (
       <Text size="sm">
-        {timestamp} - is the unix epoch that this layout last rendered at.
+        {time} - is the unix epoch that this layout last rendered at.
       </Text>
     ),
     labels: { confirm: 'Okay', cancel: 'Cancel' },
@@ -32,7 +36,7 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
           className={cm('text-white text-2xl font-bold align-middle cursor-pointer')}
           onClick={openModal}
         >
-          {timestamp}
+          {time}
         </div>
         <Button
           className={cm('text-white text-2xl font-bold align-middle')}

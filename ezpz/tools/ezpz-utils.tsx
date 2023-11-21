@@ -1,9 +1,10 @@
 import { ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-export const isServer =
+export const isServer = (
   typeof process === 'object' &&
   process?.env?.isServer === 'true'
+) || typeof document === 'undefined'
 export const isClient = !isServer
 
 export const cm = (...args: ClassValue[]): string => {

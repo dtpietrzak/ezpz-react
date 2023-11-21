@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 export * from './tools/react-wrappers'
 export * from './tools/react-router-dom-wrappers'
 export * from './tools/ezpz-components'

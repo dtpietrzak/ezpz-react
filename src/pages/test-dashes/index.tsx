@@ -1,4 +1,6 @@
-import { useNavigate, useState, Page, useServer } from "ezpz"
+import * as React from 'react'
+
+import { useNavigate, Page, useServer } from "ezpz"
 import { PageConfig } from 'ezpz/types'
 
 export const config: PageConfig = {}
@@ -19,19 +21,20 @@ const TestDashes = () => {
         })).json()
       ),
     }, {
-      serverInitId: 'poop_nug',
+      serverInitId: 'example_id',
       loadOn: 'server',
     })
 
   return (
     <Page config={config}>
-      <h1>Test-Dashes</h1>
+      <h1>Test-Dash</h1>
       <textarea
         id="editor"
         name="editor"
         rows={10}
         cols={80}
         value={value}
+        onChange={(e) => setLocalValue(e.target.value)}
       />
       <button
         onClick={() => navigate(-1)}

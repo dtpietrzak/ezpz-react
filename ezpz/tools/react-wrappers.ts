@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 
 interface AsyncFunctionComponent<P = {}> {
   (props: P, context?: any): Promise<React.ReactNode>;

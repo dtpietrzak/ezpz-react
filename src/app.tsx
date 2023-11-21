@@ -1,16 +1,17 @@
 import { Meta } from 'ezpz/tools/components/Meta'
 import { PageConfig } from 'ezpz/types'
-import React, { FC } from 'react'
+import * as React from 'react'
 import config from 'ezpz.config'
 import { ColorSchemeScript } from '@mantine/core'
 import ProvidersForServerAndClient from 'ezpz/tools/components/ProvidersForServerAndClient'
+import Home from './pages'
 
 interface AppProps {
   pageConfig?: PageConfig
   children?: React.ReactNode
 }
 
-const App: FC<AppProps> = ({
+const App: React.FC<AppProps> = ({
   pageConfig,
   children,
 }) => {
@@ -36,9 +37,8 @@ const App: FC<AppProps> = ({
           pageValue={pageConfig?.viewport}
           globalValue={config.global_page_config?.viewport}
         />
-        <link href="/scripts/bundle.css" rel="stylesheet" />
+        <link href="__css_injection__" rel="stylesheet" />
         <ColorSchemeScript />
-        <script>__script_injection__</script>
       </head>
       <body>
         <div id="app-root">
@@ -46,6 +46,7 @@ const App: FC<AppProps> = ({
             {children}
           </ProvidersForServerAndClient>
         </div>
+        __script_injection__
       </body>
     </html>
   )

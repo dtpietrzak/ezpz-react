@@ -1,1 +1,0 @@
-export default `window.onload=function(){var e=document.createElement("script");e.src="/scripts/bundle.js",e.async=!0,e.defer=!0,document.body.appendChild(e)};`
