@@ -49,6 +49,7 @@ export const stopServer = async () => {
         console.log('server closed')
         resolve(true)
       })
+      resolve(true)
     } else {
       reject('server is not defined')
     }

@@ -42,8 +42,8 @@ const Home = () => {
         })).json() 
       ),
     }, {
-      serverInitId: 'example_id',
       loadOn: 'client',
+      serverInitId: 'home_page_data'
     })
 
   return (

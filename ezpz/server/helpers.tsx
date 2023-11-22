@@ -27,17 +27,17 @@ export const htmlFromRoute = async (
       return [lf.uid, (await lf.function()).data]
     })
   )
-  const dataArray = funcEntries.map(([_, data]) => data)
+
   const funcObject = Object.fromEntries(funcEntries)
 
   const WithLayouts = () => {
     if (!layouts_map || layouts_map.has(route.path) === false) {
-      return route.Component(...dataArray)
+      return route.Component(funcObject)
     } else {
       return layouts_map.get(route.path)?.Layouts.reduce((acc, Layout) => {
         if (!Layout) return acc
         return (<Layout>{acc}</Layout>)
-      }, route.Component(...dataArray)
+      }, route.Component(funcObject)
       )
     }
   }

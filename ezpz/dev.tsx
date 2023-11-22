@@ -10,8 +10,9 @@ import chokidar from 'chokidar'
 import { updateRoutesWithNewBuild } from './server/helpers'
 import express from 'express'
 import { port } from 'src/server'
+import buildPages from './build/build-pages'
 
-const isCachingBuilds = true
+const isCachingBuilds = false
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 let buildResult: UnwrapPromise<ReturnType<typeof build>>
@@ -27,6 +28,7 @@ app_for_ws?.listen(port+1, () => {
 })
 
 const initServer = async () => {
+  await buildPages(false)
   console.time('dev-build-time')
   buildResult = await build(isCachingBuilds)
   console.timeEnd('dev-build-time')
