@@ -3,9 +3,10 @@ import {
   useEffect as RUseEffect,
 } from 'react'
 import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn } from 'ezpz/types'
-import { isClient, isServer } from './ezpz-utils'
+import { isServer } from './ezpz-utils'
 import { nprogress } from '@mantine/nprogress'
 import { useLocation } from './react-router-dom-wrappers'
+import { useState } from './react-wrappers'
 
 
 // render options
@@ -49,7 +50,6 @@ export const useServer = <T,>(
     return [serverInit, () => serverInit, () => serverInit, 'success']
   }
 
-  const location = useLocation()
   let initFromServer = false
 
   if (serverInitId) {
@@ -173,4 +173,26 @@ export const useSkipServer = <T,>(hook: T, serverReturn?: any) => {
 export const useSkipClient = <T,>(hook: T, clientReturn?: any) => {
   if (isServer) return clientReturn as T
   return hook
+}
+
+
+
+
+export const useStateWithTrigger = <S = unknown>(initialState: S | (() => S)) => {
+  const [state, _setState] = useState<S>(initialState)
+  const [trigger, setTrigger] = useState<boolean>(false)
+
+  const setStateWithTrigger = (
+    newState: React.SetStateAction<S>,
+    shouldForceTrigger: boolean = false,
+  ) => {
+    _setState(newState)
+    if (shouldForceTrigger) setTrigger(!trigger)
+  }
+
+  return [
+    state,
+    setStateWithTrigger,
+    trigger,
+  ] as const
 }

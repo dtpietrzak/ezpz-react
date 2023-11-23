@@ -1,5 +1,3 @@
-import * as React from 'react'
-
 import { useNavigate, Page, useServer } from "ezpz"
 import { PageConfig } from 'ezpz/types'
 

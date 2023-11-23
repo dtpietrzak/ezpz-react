@@ -14,11 +14,27 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
 
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 
+  const [value, setLocalValue, setServerValue, statusOfValue] =
+    useServer<string>('value', {
+      loadFunction: async () => (
+        (await fetch('http://localhost:3000/api/layout')).json()
+      ),
+      updateFunction: async (data) => (
+        (await fetch('http://localhost:3000/api/layout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: data })
+        })).json()
+      ),
+    }, {
+      loadOn: 'server',
+    })
+
   const openModal = () => modals.openConfirmModal({
     title: 'Please confirm your action',
     children: (
       <Text size="sm">
-        {time} - is the unix epoch that this layout last rendered at.
+        {time} - is the unix epoch that this layout last rendered at. - {value}
       </Text>
     ),
     labels: { confirm: 'Okay', cancel: 'Cancel' },

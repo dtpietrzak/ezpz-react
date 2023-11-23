@@ -1,6 +1,5 @@
-import { FC, useMemo, useEffect, useState } from "react"
-// @ts-ignore
-import layouts_map from "build/layouts/layouts"
+import { FC, useEffect, useState } from "react"
+import layouts_map from "build/layouts/layouts_for_csr"
 
 let observer: MutationObserver
 let oldHref: string

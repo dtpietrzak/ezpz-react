@@ -35,40 +35,51 @@ export type UseServerOptions = {
   updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
 }
 
+export type LoadFunctionData = {
+  loadFunction: any
+  uid: string
+  loadOnServer: boolean
+}
+
 export type UseServerReturn<T> = [
   T,
   React.Dispatch<React.SetStateAction<T>>,
-  React.Dispatch<React.SetStateAction<T>> | 
+  React.Dispatch<React.SetStateAction<T>> |
   ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
   LoadStatus,
 ]
 
-export type TempSsrRoute = {
-  name: 'Index',
-  path: '/',
+export type RouteSSR = {
+  name: string,
+  path: string,
   Component: any,
   config: PageConfig,
-  loadFunctionNames: string[],
-  loadFunctionUIDs: string[],
-  loadFunctionsLoadOnServer: boolean[],
-}
-
-export type Route = {
-  name: string
-  path: string
-  Component: any
-  config?: PageConfig
-  loadFunctions: {
-    // this is the name of the value getter of the useServer hook (ex: value)
-    name: string
-    // this is created automatically during compilation
-    uid: string
-    loadOnServer: boolean
-    // this is the actual load function that is called
-    function: any
-  }[]
+  loadFunctionData: LoadFunctionData[],
 }
 
 export type RouteCSR = RouteObject & {
   config: PageConfig,
 }
+
+export type LayoutEntrySSR = [
+  string,
+  {
+    path: string
+    layoutPaths: string[]
+    layoutsHash: string
+    Layouts: {
+      Component: React.FC<any>
+      loadFunctionData: LoadFunctionData[]
+    }[]
+  }
+]
+
+export type LayoutEntryCSR = [
+  string,
+  {
+    path: string
+    layoutPaths: string[]
+    Layouts: FC<any>[]
+    layoutsHash: string
+  }
+]

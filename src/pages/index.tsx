@@ -1,4 +1,3 @@
-import * as React from 'react'
 import {
   useState,
   useServer,
@@ -6,6 +5,8 @@ import {
   Page,
   LoadHandler,
   useSkipServer,
+  useStateWithTrigger,
+  useEffect,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button'
@@ -13,7 +14,7 @@ import { TextInput } from '@mantine/core'
 import { Carousel } from '@mantine/carousel'
 
 export const config: PageConfig = {
-  title: 'Home',
+  title: 'Home', 
   description: 'Home page description',
 }
 
@@ -24,10 +25,9 @@ export const config: PageConfig = {
 // const [value, setLocalValue, setServerValue, statusOfValue] = useServerData<string>('contextKey')
 
 const Home = () => {
-  const [text, setText] = useSkipServer(
-    useState('test_thi'),
-    ['string', () => { }],
-  )
+  const [text, setText, textTrigger] = useStateWithTrigger([
+    'initial value', 'other value',
+  ])
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
     useServer<string>('value', {
@@ -53,21 +53,21 @@ const Home = () => {
       <TextInput
         id="editor"
         name="editor"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={text[0]}
+        onChange={(e) => setText([e.currentTarget.value, text[1]], true)}
       />
       <div>
         <Link to="/test-dashes/">Test Dashes</Link>
         <Link to="/dashboard/">Dashboard</Link>
       </div>
       <Button
-        onClick={() => setLocalValue(text)}
+        onClick={() => setLocalValue(text[0])}
         disabled={statusOfValue !== 'success'}
       >
         Update Locally
       </Button>
       <Button
-        onClick={() => setServerValue(text)}
+        onClick={() => setServerValue(text[0])}
         disabled={statusOfValue !== 'success'}
       >
         Update Server

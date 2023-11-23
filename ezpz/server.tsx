@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import express, { Router, Request, Response, Application, Express } from 'express'
-import { Route } from 'ezpz/types'
+import { RouteSSR } from 'ezpz/types'
 import { port, serverRoutes } from 'src/server'
 
 
@@ -68,7 +68,7 @@ export const restartServer = async (between?: AnyFunction) => {
 
 
 export const updateRoutes = async (
-  routeContent: (route: Route) => Promise<string>,
+  routeContent: (route: RouteSSR) => Promise<string>,
 ) => {
   const routes = (await import('build/routing/routes_for_ssr')).routes
 
