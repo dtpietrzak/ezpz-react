@@ -4,7 +4,6 @@ import * as React from 'react'
 import config from 'ezpz.config'
 import { ColorSchemeScript } from '@mantine/core'
 import ProvidersForServerAndClient from 'ezpz/tools/components/ProvidersForServerAndClient'
-import Home from './pages'
 
 interface AppProps {
   pageConfig?: PageConfig

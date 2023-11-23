@@ -55,7 +55,7 @@ export const htmlFromRoute = async (
 
 export const updateRoutesWithNewBuild = async (_buildResult) => {
   const injections = getBundlePaths(_buildResult)
-  const App = (await import('build/ssr/app')).default
+  const App = (await import('build/app')).default
   const layouts_map = (await import('build/layouts/layouts_for_ssr')).layouts_map
   await updateRoutes(async (route) => {
     return await htmlFromRoute(
