@@ -49,7 +49,7 @@ export const htmlFromRoute = async (
   )
     .replace('__script_injection__', scriptInjection || '')
     .replace('__css_injection__', cssSrcInjection || '')}
-  <script>window.__initial_data__ = ${JSON.stringify(funcObject)}</script>`
+  <script>window.__ezpz_data__ = ${JSON.stringify(funcObject)}</script>`
 }
 
 

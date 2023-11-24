@@ -19,8 +19,8 @@ const TestDashes = () => {
         })).json()
       ),
     }, {
-      serverInitId: 'example_id',
-      loadOn: 'server',
+      serverSyncId: 'example_id',
+      loadOn: 'client',
     })
 
   return (

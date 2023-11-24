@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from "react"
 import layouts_map from "build/layouts/layouts_for_csr"
+import { update } from "lodash"
 
 let observer: MutationObserver
 let oldHref: string
@@ -12,28 +13,18 @@ type LayoutsProps = {
 const Layouts: FC<LayoutsProps> = ({
   children,
 }) => {
-  const [WithLayouts, setWithLayouts] = useState<React.ReactNode>(null)
+  const [WithLayouts, setWithLayouts] = useState<React.ReactNode | null>(null)
 
   useEffect(() => {
     oldLayoutHash = layouts_map
       .get(document.location.pathname)?.layoutsHash ?? ''
 
-    setWithLayouts(() => {
-      const routes = layouts_map.get(document.location.pathname)
-      if (!routes) return null
-      if (!routes.Layouts || routes.Layouts.length === 0) {
-        return children
-      } else {
-        return routes.Layouts.reduce((acc, Layout) => {
-          if (!Layout) return acc
-          return (<Layout>{acc}</Layout>)
-        }, children)
-      }
-    })
+    setWithLayouts(updateLayouts(children))
 
     oldHref = document.location.href
     const body = document.querySelector("body")
-    observer = new MutationObserver(mutations => {
+    if (!body) return
+    observer = new MutationObserver(() => {
       if (oldHref !== document.location.href) {
         oldHref = document.location.href
 
@@ -44,23 +35,11 @@ const Layouts: FC<LayoutsProps> = ({
           oldLayoutHash = layouts_map
             .get(document.location.pathname)?.layoutsHash ?? ''
 
-          setWithLayouts(() => {
-            const routes = layouts_map.get(document.location.pathname)
-            if (!routes) return null
-            if (!routes.Layouts || routes.Layouts.length === 0) {
-              return children
-            } else {
-              return routes.Layouts.reduce((acc, Layout) => {
-                if (!Layout) return acc
-                return (<Layout>{acc}</Layout>)
-              }, children)
-            }
-          })
+          setWithLayouts(updateLayouts(children))
         }
       }
     })
-    if (!body) return
-    observer.observe(body, { childList: true, subtree: true });
+    observer.observe(body, { childList: true, subtree: true })
 
     return () => {
       if (observer) observer.disconnect()
@@ -68,6 +47,19 @@ const Layouts: FC<LayoutsProps> = ({
   }, [])
 
   return WithLayouts
+}
+
+const updateLayouts = (children: any) => {
+  const routes = layouts_map.get(document.location.pathname)
+  if (!routes) return null
+  if (!routes.Layouts || routes.Layouts.length === 0) {
+    return children
+  } else {
+    return routes.Layouts.reduce((acc, Layout) => {
+      if (!Layout) return acc
+      return (<Layout>{acc}</Layout>)
+    }, children)
+  }
 }
 
 export default Layouts

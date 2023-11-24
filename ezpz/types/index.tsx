@@ -30,7 +30,7 @@ export type ServerFunctions<T> = {
 export type UseServerOptions = {
   loadOn?: 'client' | 'server'
   serverInit?: any
-  serverInitId?: string
+  serverSyncId?: string
   serverLoadAt?: 'compile' | 'runtime'
   updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
 }
@@ -83,3 +83,5 @@ export type LayoutEntryCSR = [
     layoutsHash: string
   }
 ]
+
+export type ComponentType = 'page' | 'layout' | 'component' | 'unknown'

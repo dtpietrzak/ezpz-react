@@ -10,3 +10,8 @@ interface ImportMetaHot {
 interface ImportMeta {
   hot: ImportMetaHot | undefined;
 }
+
+interface Window {
+  __ezpz_data__: any;
+  __ezpz_cache__: any;
+}

@@ -11,7 +11,7 @@ import { updateRoutesWithNewBuild } from './server/helpers'
 import express from 'express'
 import { port } from 'src/server'
 
-const isCachingBuilds = true
+const isCachingBuilds = false
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 let buildResult: UnwrapPromise<ReturnType<typeof build>>

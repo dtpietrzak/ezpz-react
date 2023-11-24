@@ -8,6 +8,7 @@ import { LoadFunctionData } from 'ezpz/types'
 const devDefinedInitIdUnique: Map<string, string> = new Map()
 
 export const parseComponent = (filePath: string, fileContents: string) => {
+  const componentType = filePath.endsWith('index.tsx') ? 'page' : 'layout'
 
   // uci = unique component identifier
   const uci = filePath
@@ -132,26 +133,27 @@ export const parseComponent = (filePath: string, fileContents: string) => {
               componentLoadFunctionsLoadOnServer.push(false)
             }
           }
-          if (prop.key.name === 'serverInitId') {
+          if (prop.key.name === 'serverSyncId') {
             if (typeof prop.value.value === 'string') {
               // regex throw an error if prop.value.value could not be used as a function name in javascript
               if (!prop.value.value.match(/^[a-zA-Z_$][0-9a-zA-Z_$]*$/)) {
-                throw new Error(`serverInitId must be a string that could resolve to valid function name, see: ${defaultExportName} / ${prop.value.value}`)
+                throw new Error(`serverSyncId must be a string that could resolve to valid function name, see: ${defaultExportName} / ${prop.value.value}`)
               }
               devDefinedInitIdUnique.set(prop.value.value, defaultExportName)
-              loadFunctionUid = `__dev_defined__${prop.value.value}`
+              loadFunctionUid = `${componentType}__dev_defined__${prop.value.value}`
+              prop.value.value = loadFunctionUid
             } else {
-              throw new Error(`serverInitId must be a string, see: ${defaultExportName}`)
+              throw new Error(`serverSyncId must be a string, see: ${defaultExportName}`)
             }
           }
         })
 
         if (!loadFunctionUid) {
-          const lf_cui = `lf_${uuidv4().replaceAll('-', '_')}`
+          const lf_cui = `${componentType}_lf_${uuidv4().replaceAll('-', '_')}`
           loadFunctionUid = lf_cui
           node.declarations[0].init.arguments[2].properties.push(
             t.objectProperty(
-              t.identifier('serverInitId'),
+              t.identifier('serverSyncId'),
               t.stringLiteral(lf_cui),
             ),
           )

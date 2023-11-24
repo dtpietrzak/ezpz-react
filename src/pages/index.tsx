@@ -1,12 +1,8 @@
 import {
-  useState,
   useServer,
   Link,
   Page,
   LoadHandler,
-  useSkipServer,
-  useStateWithTrigger,
-  useEffect,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button'
@@ -25,9 +21,6 @@ export const config: PageConfig = {
 // const [value, setLocalValue, setServerValue, statusOfValue] = useServerData<string>('contextKey')
 
 const Home = () => {
-  const [text, setText, textTrigger] = useStateWithTrigger([
-    'initial value', 'other value',
-  ])
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
     useServer<string>('value', {
@@ -43,7 +36,7 @@ const Home = () => {
       ),
     }, {
       loadOn: 'client',
-      serverInitId: 'home_page_data'
+      serverSyncId: 'page_comp',
     })
 
   return (
@@ -53,21 +46,21 @@ const Home = () => {
       <TextInput
         id="editor"
         name="editor"
-        value={text[0]}
-        onChange={(e) => setText([e.currentTarget.value, text[1]], true)}
+        value={value}
+        onChange={(e) => setLocalValue(e.currentTarget.value)}
       />
       <div>
         <Link to="/test-dashes/">Test Dashes</Link>
         <Link to="/dashboard/">Dashboard</Link>
       </div>
       <Button
-        onClick={() => setLocalValue(text[0])}
+        onClick={() => setLocalValue(value)}
         disabled={statusOfValue !== 'success'}
       >
         Update Locally
       </Button>
       <Button
-        onClick={() => setServerValue(text[0])}
+        onClick={() => setServerValue(value)}
         disabled={statusOfValue !== 'success'}
       >
         Update Server
