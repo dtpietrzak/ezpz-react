@@ -1,9 +1,9 @@
 import { FC } from "react"
 
-import { RouterProvider } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 // @ts-ignore
-import { router } from 'build/routing/routes_for_csr'
+import { routes } from 'build/routing/routes_for_csr'
 import Layouts from './Layouts'
 import ProvidersForServerAndClient from "./ProvidersForServerAndClient"
 
@@ -31,11 +31,23 @@ const ProvidersForClient: FC = () => {
   // }), [data, updateData])
 
   return (
-    <ProvidersForServerAndClient>
-      <Layouts>
-        <RouterProvider router={router!} />
-      </Layouts>
-    </ProvidersForServerAndClient>
+    <BrowserRouter>
+      <ProvidersForServerAndClient>
+        <Layouts>
+          <Routes>
+            {routes.map((route) => {
+              return (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  Component={route.Component}
+                />
+              )
+            })}
+          </Routes>
+        </Layouts>
+      </ProvidersForServerAndClient>
+    </BrowserRouter>
   )
 }
 

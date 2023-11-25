@@ -12,6 +12,6 @@ interface ImportMeta {
 }
 
 interface Window {
-  __ezpz_data__: any;
-  __ezpz_cache__: any;
+  __ezpz_data__: Record<string, any>;
+  __ezpz_cache__: Map<string, any>;
 }

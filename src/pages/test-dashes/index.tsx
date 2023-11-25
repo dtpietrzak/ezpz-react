@@ -1,4 +1,4 @@
-import { useNavigate, Page, useServer } from "ezpz"
+import { useNavigate, Page, useServer, useServerState } from "ezpz"
 import { PageConfig } from 'ezpz/types'
 
 export const config: PageConfig = {}
@@ -6,22 +6,8 @@ export const config: PageConfig = {}
 const TestDashes = () => {
   const navigate = useNavigate()
 
-  const [value, setLocalValue, setServerValue, statusOfValue] =
-    useServer<string>('value', {
-      loadFunction: async () => (
-        (await fetch('http://localhost:3000/api')).json()
-      ),
-      updateFunction: async (data) => (
-        (await fetch('http://localhost:3000/api', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: data })
-        })).json()
-      ),
-    }, {
-      serverSyncId: 'example_id',
-      loadOn: 'client',
-    })
+  const [value, setLocalValue, setServerValue, statusOfValue, reloadValue] =
+    useServerState<string>('page_comp', '')
 
   return (
     <Page config={config}>
@@ -34,6 +20,16 @@ const TestDashes = () => {
         value={value}
         onChange={(e) => setLocalValue(e.target.value)}
       />
+      <button
+        onClick={() => setServerValue(value)}
+      >
+        SAVE ON SERVER
+      </button>
+      <button
+        onClick={() => reloadValue()}
+      >
+        Load from server
+      </button>
       <button
         onClick={() => navigate(-1)}
       >

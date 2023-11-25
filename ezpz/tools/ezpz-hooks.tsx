@@ -1,7 +1,8 @@
 import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, ComponentType } from 'ezpz/types'
 import { isClient, isServer } from './ezpz-utils'
-import { useState, useEffect } from './react-wrappers'
+import { useState, useEffect, useCallback } from './react-wrappers'
 import { nprogress } from '@mantine/nprogress'
+import { useLocation } from './react-router-dom-wrappers'
 
 
 // render options
@@ -68,6 +69,40 @@ const loadFunctionStatusUpdateTrigger = (
   )
 }
 
+const loadFunctionUpdateServerTrigger = <T,>(
+  value: T,
+  serverSyncId: string
+) => {
+  if (!serverSyncId) return
+  window.dispatchEvent(
+    new CustomEvent('loadFunctionUpdateServer', {
+      detail: {
+        value: value,
+        serverSyncId: serverSyncId,
+      }
+    })
+  )
+}
+
+const loadFunctionUpdateClientTrigger = (
+  serverSyncId: string
+) => {
+  if (!serverSyncId) return
+  window.dispatchEvent(
+    new CustomEvent('loadFunctionUpdateClient', {
+      detail: {
+        serverSyncId: serverSyncId,
+      }
+    })
+  )
+}
+
+const promiseNotReady: Promise<false> =
+  new Promise((resolve) => resolve(false))
+
+const promiseSuccess: Promise<true> =
+  new Promise((resolve) => resolve(true))
+
 export const useServer = <T,>(
   initialState: T,
   {
@@ -78,16 +113,28 @@ export const useServer = <T,>(
     updateAs = 'optimistic', serverSyncId, serverInit,
   }: UseServerOptions,
 ): UseServerReturn<T> => {
-  let componentType: ComponentType = 'unknown'
-
   if (isServer) {
     if (loadOn === 'client' || !serverInit) {
-      return [initialState, () => initialState, () => initialState, 'init']
+      return [
+        initialState,
+        () => { },
+        () => promiseNotReady,
+        'init',
+        () => promiseNotReady,
+      ]
     }
-    return [serverInit, () => serverInit, () => serverInit, 'success']
+    return [
+      serverInit,
+      () => { },
+      () => promiseSuccess,
+      'success',
+      () => promiseSuccess,
+    ]
   }
 
+  let componentType: ComponentType = 'unknown'
   let initFromServer = false
+  const location = useLocation()
 
   if (serverSyncId) {
     // remove layout_ or page_ from serverSyncId
@@ -100,9 +147,12 @@ export const useServer = <T,>(
       componentType = 'page'
     }
     // check if it's already been cached
-    if (window.__ezpz_cache__.has(serverSyncId)) {
+    if (window.__ezpz_cache__.has(serverSyncId) && init) {
       // if so, override the init object for this serverSyncId
-      init[serverSyncId] = window.__ezpz_cache__.get(serverSyncId)
+      const _init = window.__ezpz_cache__.get(serverSyncId)
+      if (typeof _init !== 'undefined') {
+        init[serverSyncId] = _init
+      }
     }
   }
 
@@ -110,7 +160,9 @@ export const useServer = <T,>(
   if (serverSyncId && init?.[serverSyncId]) {
     initFromServer = true
     // override internal initial state with server state
-    initialState = init[serverSyncId]
+    if (typeof init[serverSyncId] !== 'undefined') {
+      initialState = init[serverSyncId]
+    }
   }
 
   const [state, _setLocalState] = useState(initialState)
@@ -130,14 +182,9 @@ export const useServer = <T,>(
   }
 
   const syncLoadFunctionState = (e) => {
-    if (
-      e.detail.componentType === 'page' && componentType === 'layout' ||
-      e.detail.componentType === 'layout' && componentType === 'page'
-    ) {
-      if (e.detail.serverSyncId === serverSyncId) {
-        // just send it!
-        _setLocalState(e.detail.value)
-      }
+    if (e.detail.serverSyncId === serverSyncId) {
+      // just send it!
+      _setLocalState(e.detail.value)
     }
   }
 
@@ -146,6 +193,7 @@ export const useServer = <T,>(
   )
 
   const setStatus = (loadStatus: LoadStatus) => {
+    if (serverSyncId === '__dev_defined__page_comp') console.log(loadStatus, 'status')
     _setStatus(loadStatus)
     loadFunctionStatusUpdateTrigger(
       loadStatus,
@@ -155,27 +203,57 @@ export const useServer = <T,>(
   }
 
   const syncLoadFunctionStatus = (e) => {
-    if (
-      e.detail.componentType === 'page' && componentType === 'layout' ||
-      e.detail.componentType === 'layout' && componentType === 'page'
-    ) {
-      if (e.detail.serverSyncId === serverSyncId) {
-        // just send it!
-        _setStatus(e.detail.status)
-      }
+    if (e.detail.serverSyncId === serverSyncId) {
+      // just send it!
+      _setStatus(e.detail.status)
     }
   }
 
   let _error: ErrorMessage | undefined
 
+  const _loadFunction = async (ignore?: boolean) => {
+    _error = undefined
+    if (initFromServer && !initSsrComplete) {
+      initSsrComplete = true
+      return promiseSuccess
+    }
+    await loadFunction()
+      .then(({ data, status, error }) => {
+        if (!ignore) {
+          if (status === 'success') {
+            if (serverSyncId) {
+              updateCache(serverSyncId, data)
+              loadFunctionStateUpdateTrigger(
+                data,
+                componentType,
+                serverSyncId,
+              )
+            }
+            setLocalState(data ?? initialState)
+          }
+          setStatus(status)
+          _error = error
+        }
+      })
+      .catch((error) => {
+        if (!ignore) {
+          setStatus('error')
+          _error = error
+        }
+      })
+    if (!ignore && _error) throw new Error(_error)
+    return true
+  }
+
   const setServerState = async (data?: React.SetStateAction<T>) => {
+    _error = undefined
     if (typeof data === 'undefined') data = state
     const lastData = state
 
     if (updateAs === 'client-only') {
       setLocalState(data)
       setStatus('success')
-      return
+      return promiseSuccess
     }
 
     if (updateAs === 'optimistic') {
@@ -192,7 +270,7 @@ export const useServer = <T,>(
     setStatus('loading')
 
     if (updateFunction) {
-      updateFunction(data)
+      await updateFunction(data)
         .then(({ data: updatedData, status, error }) => {
           if (status === 'success' && updateAs === 'pessimistic') {
             if (serverSyncId) {
@@ -220,9 +298,131 @@ export const useServer = <T,>(
           _error = error
         })
     }
-    return _error
+    if (_error) throw new Error(_error)
+    return true
   }
 
+  const updateServerPerRequest = async (e) => {
+    if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
+      setServerState(e.detail.value)
+    }
+  }
+
+  const updateClientPerRequest = async (e) => {
+    console.log(e.detail.serverSyncId, serverSyncId, 'update client')
+    if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
+      setStatus('loading')
+      _loadFunction()
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener(
+      'loadFunctionStateUpdated', syncLoadFunctionState,
+    )
+
+    window.addEventListener(
+      'loadFunctionStatusUpdated', syncLoadFunctionStatus,
+    )
+
+    window.addEventListener(
+      'loadFunctionUpdateServer', updateServerPerRequest,
+    )
+
+    window.addEventListener(
+      'loadFunctionUpdateClient', updateClientPerRequest,
+    )
+
+    return (() => {
+      window.removeEventListener(
+        'loadFunctionStateUpdated', syncLoadFunctionState,
+      )
+
+      window.removeEventListener(
+        'loadFunctionStatusUpdated', syncLoadFunctionStatus,
+      )
+
+      window.removeEventListener(
+        'loadFunctionUpdateServer', updateServerPerRequest,
+      )
+
+      window.removeEventListener(
+        'loadFunctionUpdateClient', updateClientPerRequest,
+      )
+    })
+  }, [])
+
+  useEffect(() => {
+    let ignore = false
+    if (status !== 'init') setStatus('loading')
+    _loadFunction(ignore).then((good) => { if (good) setStatus('success') })
+    return () => {
+      ignore = true
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (status === 'loading' || status === 'init') nprogress.start()
+    if (status === 'success' || status === 'error') nprogress.complete()
+  }, [status])
+
+  return [
+    state,
+    setLocalState,
+    setServerState,
+    status,
+    () => _loadFunction(),
+  ]
+}
+
+
+
+
+export const useServerState = <T,>(
+  serverSyncId: string,
+  initialState: T,
+): UseServerReturn<T> => {
+  serverSyncId = `__dev_defined__${serverSyncId}`
+
+  if (isClient) {
+    // check if it's already been cached
+    if (window.__ezpz_cache__.has(serverSyncId) && init) {
+      // if so, override the init object for this serverSyncId
+      init[serverSyncId] = window.__ezpz_cache__.get(serverSyncId)
+    }
+  }
+
+  if (init?.[serverSyncId] && typeof init[serverSyncId] !== 'undefined') {
+    // override internal initial state with server state
+    initialState = init[serverSyncId]
+  }
+
+  const [state, setState] = useState<T>(initialState)
+  const [status, setStatus] = useState<LoadStatus>('init')
+
+  const syncLoadFunctionState = (e) => {
+    if (e.detail.serverSyncId === serverSyncId) {
+      // just send it!
+      setState(e.detail.value)
+    }
+  }
+
+  const syncLoadFunctionStatus = (e) => {
+    if (e.detail.serverSyncId === serverSyncId) {
+      // just send it!
+      setStatus(e.detail.status)
+    }
+  }
+
+  const setServerState = useCallback(async (data: React.SetStateAction<T>) => {
+    loadFunctionUpdateServerTrigger(data, serverSyncId)
+    return false
+  }, [])
+
+  const reloadServer = useCallback(async () => {
+    loadFunctionUpdateClientTrigger(serverSyncId)
+    return false
+  }, [])
 
   useEffect(() => {
     window.addEventListener(
@@ -244,59 +444,15 @@ export const useServer = <T,>(
     })
   }, [])
 
-  useEffect(() => {
-    let ignore = false
-
-    if (initFromServer && !initSsrComplete) {
-      initSsrComplete = true
-      return
-    }
-
-    if (status !== 'init') {
-      setStatus('loading')
-    }
-    loadFunction()
-      .then(({ data, status, error }) => {
-        if (!ignore) {
-          if (status === 'success') {
-            if (serverSyncId) {
-              updateCache(serverSyncId, data)
-              loadFunctionStateUpdateTrigger(
-                data,
-                componentType,
-                serverSyncId,
-              )
-            }
-            setLocalState(data ?? initialState)
-          }
-          setStatus(status)
-          _error = error
-        }
-      })
-      .catch((error) => {
-        if (!ignore) {
-          setStatus('error')
-          _error = error
-        }
-      })
-
-    return () => {
-      ignore = true
-    }
-  }, [location.pathname])
-
-  useEffect(() => {
-    if (status === 'loading') nprogress.start()
-    if (status === 'success' || status === 'error') nprogress.complete()
-  }, [status])
-
   return [
     state,
-    setLocalState,
+    setState,
     setServerState,
     status,
+    reloadServer,
   ]
 }
+
 
 
 

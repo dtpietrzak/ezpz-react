@@ -3,6 +3,7 @@ import {
   Link,
   Page,
   LoadHandler,
+  useServerState,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button'
@@ -23,21 +24,7 @@ export const config: PageConfig = {
 const Home = () => {
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
-    useServer<string>('value', {
-      loadFunction: async () => (
-        (await fetch('http://localhost:3000/api')).json()
-      ),
-      updateFunction: async (data) => (
-        (await fetch('http://localhost:3000/api', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: data })
-        })).json() 
-      ),
-    }, {
-      loadOn: 'client',
-      serverSyncId: 'page_comp',
-    })
+    useServerState<string>('page_comp', '')
 
   return (
     <Page config={config} id='page_comp'>

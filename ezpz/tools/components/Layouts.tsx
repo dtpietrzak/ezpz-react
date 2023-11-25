@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from "react"
 import layouts_map from "build/layouts/layouts_for_csr"
-import { update } from "lodash"
 
 let observer: MutationObserver
 let oldHref: string
@@ -15,11 +14,15 @@ const Layouts: FC<LayoutsProps> = ({
 }) => {
   const [WithLayouts, setWithLayouts] = useState<React.ReactNode | null>(null)
 
+  const updateLayouts = () => {
+    setWithLayouts(_updateLayouts(children))
+  }
+
   useEffect(() => {
     oldLayoutHash = layouts_map
       .get(document.location.pathname)?.layoutsHash ?? ''
 
-    setWithLayouts(updateLayouts(children))
+    updateLayouts()
 
     oldHref = document.location.href
     const body = document.querySelector("body")
@@ -35,7 +38,7 @@ const Layouts: FC<LayoutsProps> = ({
           oldLayoutHash = layouts_map
             .get(document.location.pathname)?.layoutsHash ?? ''
 
-          setWithLayouts(updateLayouts(children))
+          updateLayouts()
         }
       }
     })
@@ -49,7 +52,7 @@ const Layouts: FC<LayoutsProps> = ({
   return WithLayouts
 }
 
-const updateLayouts = (children: any) => {
+const _updateLayouts = (children: any) => {
   const routes = layouts_map.get(document.location.pathname)
   if (!routes) return null
   if (!routes.Layouts || routes.Layouts.length === 0) {

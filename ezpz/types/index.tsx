@@ -43,10 +43,16 @@ export type LoadFunctionData = {
 
 export type UseServerReturn<T> = [
   T,
-  React.Dispatch<React.SetStateAction<T>>,
-  React.Dispatch<React.SetStateAction<T>> |
-  ((data: React.SetStateAction<T>) => Promise<ErrorMessage | undefined>),
+  (
+    newState: React.SetStateAction<T>,
+    shouldForceTrigger?: boolean,
+  ) => void,
+  (
+    newState: React.SetStateAction<T>,
+    shouldForceTrigger?: boolean,
+  ) => (Promise<boolean>),
   LoadStatus,
+  () => (Promise<boolean>),
 ]
 
 export type RouteSSR = {

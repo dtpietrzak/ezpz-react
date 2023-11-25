@@ -11,7 +11,7 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
-    useServer<string>('value', {
+    useServer<string>('', {
       loadFunction: async () => (
         (await fetch('http://localhost:3000/api')).json()
       ),
@@ -37,7 +37,7 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
     labels: { confirm: 'Okay', cancel: 'Cancel' },
     onCancel: () => console.log('Cancel'),
     onConfirm: () => {
-      setLocalValue('test')
+      setServerValue('thing').then((success) => console.log('Confirmed'))
     },
   })
 
