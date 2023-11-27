@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // thank you Jacob Ebey
 type ModuleNamespace = Record<string, any> & {
   [Symbol.toStringTag]: "Module";

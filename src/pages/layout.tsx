@@ -23,7 +23,7 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
         })).json()
       ),
     }, {
-      loadOn: 'client',
+      loadOn: 'server',
       serverSyncId: 'page_comp',
     })
 

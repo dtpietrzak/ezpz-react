@@ -1,3 +1,5 @@
+/* eslint-disable no-var */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import RefreshRuntime from "react-refresh/runtime";
 
 declare global {

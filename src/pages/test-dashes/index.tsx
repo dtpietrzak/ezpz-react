@@ -1,4 +1,4 @@
-import { useNavigate, Page, useServer, useServerState } from "ezpz"
+import { useNavigate, Page, useServer, useServerSync } from "ezpz"
 import { PageConfig } from 'ezpz/types'
 
 export const config: PageConfig = {}
@@ -7,7 +7,7 @@ const TestDashes = () => {
   const navigate = useNavigate()
 
   const [value, setLocalValue, setServerValue, statusOfValue, reloadValue] =
-    useServerState<string>('page_comp', '')
+    useServerSync<string>('page_comp', '', {})
 
   return (
     <Page config={config}>

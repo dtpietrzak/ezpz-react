@@ -59,15 +59,15 @@ const invalid_file_names = [
   'scripts',
 ]
 
-// @ts-ignore - this is a hack to get the type of the routes object
-export let routes_raw: RawRoutesFromJson = {}
-
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
+export let routes_raw: RawRoutesFromJson = {}
+// @ts-expect-error - this is a hack to get the type of the routes object
 export let routes: Routes = null
 
 const buildRoutes = async (withCache: boolean = true): Promise<void> => {
   console.time('build-routes')
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     raw_routes_from_json = JSON.parse(fs.readFileSync('build/routing/routes_raw.json', 'utf8'))
 
     const raw_routes_as_string = fs.readFileSync('build/routing/routes_raw.json', 'utf8')

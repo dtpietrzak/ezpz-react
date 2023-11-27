@@ -1,6 +1,6 @@
 import { getBundlePaths } from 'ezpz/build'
 import { updateRoutes } from 'ezpz/server'
-import { RouteSSR } from 'ezpz/types'
+import { Entry, LayoutSSR, LoadFunctionData, RouteSSR } from 'ezpz/types'
 import { renderToString } from 'react-dom/server'
 
 export const scriptsToInject = (scriptsSrc: string[]) => {
@@ -16,52 +16,91 @@ export const scriptsToInject = (scriptsSrc: string[]) => {
 export const htmlFromRoute = async (
   route: RouteSSR,
   App: any,
-  layouts_map: Map<string, any>,
+  layout: LayoutSSR | undefined,
   scriptInjection?: string,
   cssSrcInjection?: string,
 ): Promise<string> => {
 
-  const funcEntries = await Promise.all(
+  let funcEntriesForLayout: Entry<any>[] = []
+
+  if (layout) {
+    for (let i = 0; i < layout.Layouts.length; i++) {
+      await Promise.all(layout.Layouts[i].loadFunctionData.map(async (lf) => {
+        if (lf.loadOnServer === false) return
+        funcEntriesForLayout.push([lf.uid, (await lf.loadFunction()).data])
+      }))
+    }
+  }
+
+  const funcEntriesForPage: Entry<any>[] = await Promise.all(
     route.loadFunctionData.map(async (lf) => {
       if (lf.loadOnServer === false) return [lf.uid, undefined]
       return [lf.uid, (await lf.loadFunction()).data]
     })
   )
 
-  const funcObject = Object.fromEntries(funcEntries)
+  const funcObjectForPage = Object.fromEntries(funcEntriesForPage)
+  const funcObjectForLayout = Object.fromEntries(funcEntriesForLayout)
 
   const WithLayoutsSSR = () => {
-    if (!layouts_map || layouts_map.has(route.path) === false) {
-      return route.Component(funcObject)
+    if (!layout) {
+      return route.Component(funcObjectForPage)
     } else {
-      return layouts_map.get(route.path)?.Layouts.reduce((acc, Layout) => {
+      return layout.Layouts.reduce((acc, Layout) => {
         if (!Layout.Component) return acc
-        return (<Layout.Component>{acc}</Layout.Component>)
-      }, route.Component(funcObject)
+        const _funcObjectForLayout = Object.fromEntries(Layout.loadFunctionData.map((lf) => {
+          return [lf.uid, funcObjectForLayout[lf.uid]]
+        }))
+        return (
+          Layout.Component({
+            children: acc, ..._funcObjectForLayout,
+          })
+        )
+      }, route.Component(funcObjectForPage)
       )
     }
   }
 
-  return `${renderToString(
+  const allFuncsEntries = [...funcEntriesForPage, ...funcEntriesForLayout]
+
+  console.log(allFuncsEntries)
+
+  const allFuncsObject = {
+    ...funcEntriesForPage,
+    ...funcEntriesForLayout,
+  }
+
+  let html = `${renderToString(
     <App pageConfig={route.config}>
       <WithLayoutsSSR />
     </App>
   )
     .replace('__script_injection__', scriptInjection || '')
     .replace('__css_injection__', cssSrcInjection || '')}
-  <script>window.__ezpz_data__ = ${JSON.stringify(funcObject)}</script>`
+  <script>window.__ezpz_data__ = ${JSON.stringify(allFuncsObject)}</script>`
+
+  allFuncsEntries.forEach((entry) => {
+    const key = entry[0]
+      .replace('layout__dev_defined__', '')
+      .replace('page__dev_defined__', '')
+    html = html.replaceAll(
+      `__$!replace!$__${key}__$!replace!$__`, JSON.stringify(entry[1]),
+    )
+  })
+
+  return html
 }
 
 
 export const updateRoutesWithNewBuild = async (_buildResult) => {
   const injections = getBundlePaths(_buildResult)
   const App = (await import('build/app')).default
-  const layouts_map = (await import('build/layouts/layouts_for_ssr')).layouts_map
-  await updateRoutes(async (route) => {
+
+  await updateRoutes(async (route, layout) => {
     return await htmlFromRoute(
       route,
       App,
-      layouts_map,
+      layout,
       scriptsToInject(injections.js),
       injections.css,
     )

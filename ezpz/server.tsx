@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import express, { Router, Request, Response, Application, Express } from 'express'
-import { RouteSSR } from 'ezpz/types'
+import { LayoutSSR, RouteSSR } from 'ezpz/types'
 import { port, serverRoutes } from 'src/server'
 
 
@@ -68,15 +68,16 @@ export const restartServer = async (between?: AnyFunction) => {
 
 
 export const updateRoutes = async (
-  routeContent: (route: RouteSSR) => Promise<string>,
+  routeContent: (route: RouteSSR, layout?: LayoutSSR) => Promise<string>,
 ) => {
   const routes = (await import('build/routing/routes_for_ssr')).routes
+  const layouts_map = (await import('build/layouts/layouts_for_ssr')).layouts_map
 
   routes.forEach((route) => {
     router!.get(
       route.path,
       async (req: Request, res: Response) => {
-        res.send(await routeContent(route))
+        res.send(await routeContent(route, layouts_map.get(route.path)))
       },
     )
   })

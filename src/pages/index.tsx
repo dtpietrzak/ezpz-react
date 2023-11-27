@@ -3,7 +3,8 @@ import {
   Link,
   Page,
   LoadHandler,
-  useServerState,
+  useServerSync,
+  useEffect,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button'
@@ -24,7 +25,11 @@ export const config: PageConfig = {
 const Home = () => {
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
-    useServerState<string>('page_comp', '')
+    useServerSync<string>('page_comp', '', {})
+
+  useEffect(() => {
+    console.log('value changed', value)
+  }, [])
 
   return (
     <Page config={config} id='page_comp'>

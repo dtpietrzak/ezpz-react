@@ -2,7 +2,7 @@ import fs from 'fs'
 
 const buildSetup = async (): Promise<void> => {
   console.time('build-setup')
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!fs.existsSync('bundle')) {
       fs.mkdirSync('bundle', { recursive: true })
     } else {

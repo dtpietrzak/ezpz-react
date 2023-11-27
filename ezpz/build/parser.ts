@@ -2,8 +2,7 @@ import { parse } from '@babel/parser'
 import { v4 as uuidv4 } from 'uuid'
 import * as t from '@babel/types'
 import { transformFromAstSync, traverse } from '@babel/core'
-import _ from 'lodash'
-import { LoadFunctionData } from 'ezpz/types'
+import { _LoadFunctionDataBuilder } from 'ezpz/types'
 
 const devDefinedInitIdUnique: Map<string, string> = new Map()
 
@@ -29,13 +28,13 @@ export const parseComponent = (filePath: string, fileContents: string) => {
       id: t.Identifier
       name: string
       type: string
-      content: any
+      content: string
       start: number
       end: number
     }
   } = {}
 
-  fileAst.program.body.forEach((node: t.Node, i) => {
+  fileAst.program.body.forEach((node: t.Node) => {
     if (node.type === 'ExportDefaultDeclaration') {
       if (node.declaration.loc?.identifierName) {
         defaultExportName = node.declaration.loc?.identifierName
@@ -88,40 +87,19 @@ export const parseComponent = (filePath: string, fileContents: string) => {
     plugins: ["jsx", "typescript"],
   })
 
-  const componentLoadFunctionData: LoadFunctionData[] = []
+  const componentLoadFunctionData: _LoadFunctionDataBuilder[] = []
   const componentLoadFunctionInitInserts: number[] = []
   const componentLoadFunctions: string[] = []
   const componentLoadFunctionUIDs: string[] = []
   const componentLoadFunctionsLoadOnServer: boolean[] = []
 
-  // @ts-ignore
-  componentAst.program.body[0].declarations[0].init.body.body.forEach((node, i) => {
+  // @ts-expect-error declarations type from package is incorrect
+  componentAst.program.body[0].declarations[0].init.body.body.forEach((node) => {
     if (node.type === 'VariableDeclaration') {
       if (node.declarations[0].init.callee?.name === 'useServer') {
 
         const variables = node.declarations[0].id.elements
-        const capped_var_1_name = variables[0].name.charAt(0).toUpperCase() + variables[0].name.slice(1)
-
-        if (
-          variables[1]?.name &&
-          variables[1].name !== `setLocal${capped_var_1_name}`
-        ) {
-          throw new Error('a local setter function name is incorrect: must start with setLocal')
-        }
-
-        if (
-          variables[2]?.name &&
-          variables[2].name !== `setServer${capped_var_1_name}`
-        ) {
-          throw new Error('a local setter function name is incorrect: must start with setServer')
-        }
-
-        if (
-          variables[3]?.name &&
-          variables[3].name !== `statusOf${capped_var_1_name}`
-        ) {
-          throw new Error('a status value name is incorrect')
-        }
+        checkVariableNames(variables)
 
         let loadFunctionUid: string | undefined = undefined
 
@@ -138,6 +116,9 @@ export const parseComponent = (filePath: string, fileContents: string) => {
               // regex throw an error if prop.value.value could not be used as a function name in javascript
               if (!prop.value.value.match(/^[a-zA-Z_$][0-9a-zA-Z_$]*$/)) {
                 throw new Error(`serverSyncId must be a string that could resolve to valid function name, see: ${defaultExportName} / ${prop.value.value}`)
+              }
+              if (devDefinedInitIdUnique.has(prop.value.value)) {
+                throw new Error(`serverSyncId must be unique to each useSever hook, see: ${defaultExportName} / ${prop.value.value}. If you want to use the same value elsewhere, check out the useServerSync hook`)
               }
               devDefinedInitIdUnique.set(prop.value.value, defaultExportName)
               loadFunctionUid = `${componentType}__dev_defined__${prop.value.value}`
@@ -178,6 +159,18 @@ export const parseComponent = (filePath: string, fileContents: string) => {
         componentLoadFunctionInitInserts.push(
           componentStart + node.declarations[0].init.arguments[2].start,
         )
+      } else if (node.declarations[0].init.callee?.name === 'useServerSync') {
+        const variables = node.declarations[0].id.elements
+        checkVariableNames(variables)
+
+        const loadFunctionUid: string = `"__$!replace!$__${node.declarations[0].init.arguments[0].value}__$!replace!$__"`
+
+        node.declarations[0].init.arguments[2].properties.push(
+          t.objectProperty(
+            t.identifier('serverInit'),
+            t.identifier(loadFunctionUid),
+          ),
+        )
       }
     }
   })
@@ -214,7 +207,7 @@ export const parseComponent = (filePath: string, fileContents: string) => {
 }`
   })}]`)
 
-  const addedReactImportSsr =  'import * as React from \'react\'\n'.concat(addedLoadFunctionDataSsr)
+  const addedReactImportSsr = 'import * as React from \'react\'\n'.concat(addedLoadFunctionDataSsr)
 
   // TODO: make this happen with babel
   // this needs to be more robust, pretty sure it doesnt work at all for export default function syntax
@@ -273,6 +266,33 @@ function replaceFunctionByIdName(ast, targetId, newContentAst) {
   })
 }
 
+
+
+
+const checkVariableNames = (variables: { name: string }[]) => {
+  const capped_var_1_name = variables[0].name.charAt(0).toUpperCase() + variables[0].name.slice(1)
+
+  if (
+    variables[1]?.name &&
+    variables[1].name !== `setLocal${capped_var_1_name}`
+  ) {
+    throw new Error('a local setter function name is incorrect: must start with setLocal')
+  }
+
+  if (
+    variables[2]?.name &&
+    variables[2].name !== `setServer${capped_var_1_name}`
+  ) {
+    throw new Error('a local setter function name is incorrect: must start with setServer')
+  }
+
+  if (
+    variables[3]?.name &&
+    variables[3].name !== `statusOf${capped_var_1_name}`
+  ) {
+    throw new Error('a status value name is incorrect')
+  }
+}
 
 
 

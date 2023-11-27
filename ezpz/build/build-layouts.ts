@@ -2,7 +2,7 @@ import fs from 'fs'
 import crypto from 'crypto'
 
 const buildLayouts = async (): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     console.time('build-layouts')
 
     const routes_raw = JSON.parse(fs.readFileSync('build/routing/routes_raw.json', 'utf8'))
@@ -21,7 +21,7 @@ const buildLayouts = async (): Promise<void> => {
           const page_path = "/" + (previous_level + current_object[0]).replace('index', '')
           const page_path_array = page_path.split('/')
 
-          let layoutPaths: string[] = []
+          const layoutPaths: string[] = []
 
           for (let i = 0; i < (page_path_array.length - 1); i++) {
             const layout_path =
@@ -91,10 +91,10 @@ const buildLayouts = async (): Promise<void> => {
 
     const layouts_file_csr = `
 import { FC } from 'react'
-import { LayoutEntryCSR } from 'ezpz/types'
+import { Entry, LayoutCSR } from 'ezpz/types'
 ${layout_imports_csr}
 
-export const layouts_entries: LayoutEntryCSR[] = [
+export const layouts_entries: Entry<LayoutCSR>[] = [
   ${Object.entries(paths_to_layouts).map((entry: any) => {
       return `[
       '${entry[0]}',
@@ -117,10 +117,10 @@ export default layouts_map
 
 const layouts_file_ssr = `
 import { FC } from 'react'
-import { LayoutEntrySSR } from 'ezpz/types'
+import { Entry, LayoutSSR } from 'ezpz/types'
 ${layout_imports_ssr}
 
-export const layouts_entries: LayoutEntrySSR[] = [
+export const layouts_entries: Entry<LayoutSSR>[] = [
   ${Object.entries(paths_to_layouts).map((entry: any) => {
       return `[
       '${entry[0]}',

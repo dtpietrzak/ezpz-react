@@ -1,4 +1,4 @@
-import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, ComponentType } from 'ezpz/types'
+import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, ComponentType, UseServerSyncOptions, JSONable } from 'ezpz/types'
 import { isClient, isServer } from './ezpz-utils'
 import { useState, useEffect, useCallback } from './react-wrappers'
 import { nprogress } from '@mantine/nprogress'
@@ -103,7 +103,7 @@ const promiseNotReady: Promise<false> =
 const promiseSuccess: Promise<true> =
   new Promise((resolve) => resolve(true))
 
-export const useServer = <T,>(
+export const useServer = <T extends JSONable>(
   initialState: T,
   {
     loadFunction, updateFunction,
@@ -111,7 +111,7 @@ export const useServer = <T,>(
   {
     loadOn = 'client', serverLoadAt = 'runtime',
     updateAs = 'optimistic', serverSyncId, serverInit,
-  }: UseServerOptions,
+  }: UseServerOptions<T>,
 ): UseServerReturn<T> => {
   if (isServer) {
     if (loadOn === 'client' || !serverInit) {
@@ -169,7 +169,6 @@ export const useServer = <T,>(
 
   const setLocalState = (data: React.SetStateAction<T>) => {
     if (typeof data === 'function') {
-      // @ts-expect-error
       _setLocalState(data(state))
     } else {
       _setLocalState(data)
@@ -193,7 +192,6 @@ export const useServer = <T,>(
   )
 
   const setStatus = (loadStatus: LoadStatus) => {
-    if (serverSyncId === '__dev_defined__page_comp') console.log(loadStatus, 'status')
     _setStatus(loadStatus)
     loadFunctionStatusUpdateTrigger(
       loadStatus,
@@ -309,7 +307,6 @@ export const useServer = <T,>(
   }
 
   const updateClientPerRequest = async (e) => {
-    console.log(e.detail.serverSyncId, serverSyncId, 'update client')
     if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
       setStatus('loading')
       _loadFunction()
@@ -378,11 +375,16 @@ export const useServer = <T,>(
 
 
 
-export const useServerState = <T,>(
+export const useServerSync = <T extends JSONable>(
   serverSyncId: string,
   initialState: T,
+  {
+    syncLocalChanges = true, serverInit,
+  }: UseServerSyncOptions<T>,
 ): UseServerReturn<T> => {
   serverSyncId = `__dev_defined__${serverSyncId}`
+  if (serverInit) initialState = serverInit
+  let componentType: ComponentType = 'unknown'
 
   if (isClient) {
     // check if it's already been cached
@@ -397,13 +399,28 @@ export const useServerState = <T,>(
     initialState = init[serverSyncId]
   }
 
-  const [state, setState] = useState<T>(initialState)
+  const [state, _setLocalState] = useState<T>(initialState)
   const [status, setStatus] = useState<LoadStatus>('init')
+
+  const setLocalState = (data: React.SetStateAction<T>) => {
+    if (typeof data === 'function') {
+      _setLocalState(data(state))
+    } else {
+      _setLocalState(data)
+    }
+    if (syncLocalChanges) {
+      loadFunctionStateUpdateTrigger(
+        data,
+        componentType,
+        serverSyncId,
+      )
+    }
+  }
 
   const syncLoadFunctionState = (e) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
-      setState(e.detail.value)
+      _setLocalState(e.detail.value)
     }
   }
 
@@ -414,15 +431,15 @@ export const useServerState = <T,>(
     }
   }
 
-  const setServerState = useCallback(async (data: React.SetStateAction<T>) => {
+  const setServerState = async (data?: React.SetStateAction<T>) => {
     loadFunctionUpdateServerTrigger(data, serverSyncId)
     return false
-  }, [])
+  }
 
-  const reloadServer = useCallback(async () => {
+  const reloadServer = async () => {
     loadFunctionUpdateClientTrigger(serverSyncId)
     return false
-  }, [])
+  }
 
   useEffect(() => {
     window.addEventListener(
@@ -446,7 +463,7 @@ export const useServerState = <T,>(
 
   return [
     state,
-    setState,
+    setLocalState,
     setServerState,
     status,
     reloadServer,

@@ -4,7 +4,8 @@
   "description": "",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=development tsx ezpz/dev.tsx"
+    "dev": "NODE_ENV=development tsx ezpz/dev.tsx",
+    "lint": "eslint . --ext .ts"
   },
   "type": "module",
   "author": "",
@@ -64,6 +65,8 @@
     "@types/react-refresh": "^0.14.4",
     "@types/uglify-js": "^3.17.3",
     "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
     "autoprefixer": "^10.4.16",
     "babel-plugin-jsx": "^1.2.0",
     "esbuild": "0.19.5",

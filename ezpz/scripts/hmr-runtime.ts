@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-inner-declarations */
 if (!window.__hmr__) {
   window.__hmr__ = {
     contexts: {},
@@ -38,6 +40,7 @@ if (!window.__hmr__) {
         // console.log('here9: ', payload)
         if (!payload.updates?.length) return;
 
+        // eslint-disable-next-line no-case-declarations
         let anyAccepted = false
         for (const update of payload.updates) {
           if (window.__hmr__.contexts[update.id]) {
