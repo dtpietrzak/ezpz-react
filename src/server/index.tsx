@@ -10,6 +10,7 @@ export const serverRoutes = async (router: Router) => {
   let layoutMessage = 'some layout value here'
 
   router.get('/api', async (req: Request, res: Response) => {
+    console.log(req.query)
     await sleep(1000)
     res.send({
       data: message,

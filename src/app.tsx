@@ -6,13 +6,15 @@ import { ColorSchemeScript } from '@mantine/core'
 import ProvidersForServerAndClient from 'ezpz/tools/components/ProvidersForServerAndClient'
 
 interface AppProps {
-  pageConfig?: PageConfig
-  children?: React.ReactNode
+  children: React.ReactNode
+  data: Record<string, unknown>
+  pageConfig: PageConfig
 }
 
 const App: React.FC<AppProps> = ({
   pageConfig,
   children,
+  data,
 }) => {
   const title = pageConfig?.title ?? config.global_page_config?.title
 
@@ -41,7 +43,7 @@ const App: React.FC<AppProps> = ({
       </head>
       <body>
         <div id="app-root">
-          <ProvidersForServerAndClient>
+          <ProvidersForServerAndClient data={data}>
             {children}
           </ProvidersForServerAndClient>
         </div>

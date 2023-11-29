@@ -1,19 +1,21 @@
-import { FC, cm, useEffect, useServer, useState } from "ezpz"
+import { cm, useServer, useState } from "ezpz"
 import { Text, Button, Drawer, Input } from "@mantine/core"
 import { modals } from '@mantine/modals'
 import { useDisclosure } from '@mantine/hooks'
+import { LayoutFC } from "ezpz/types"
 
-const MainLayout: FC<{ children: React.ReactNode }> = ({
+const MainLayout: LayoutFC = ({
   children,
 }) => {
   const time = new Date().getTime()
-
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 
-  const [value, setLocalValue, setServerValue, statusOfValue] =
-    useServer<string>('', {
-      loadFunction: async () => (
-        (await fetch('http://localhost:3000/api')).json()
+  const [test, setTest] = useState('')
+
+  const [value, setLocalValue, setServerValue, statusOfValue, reloadValue] =
+    useServer('', {
+      loadFunction: async (data) => (
+        (await fetch(`http://localhost:3000/api?test=${data?.thing || 'poo'}`)).json()
       ),
       updateFunction: async (data) => (
         (await fetch('http://localhost:3000/api', {
@@ -23,9 +25,9 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
         })).json()
       ),
     }, {
-      loadOn: 'server',
+      loadOn: 'client',
       serverSyncId: 'page_comp',
-    })
+    }, { thing: test })
 
   const openModal = () => modals.openConfirmModal({
     title: 'Please confirm your action',
@@ -35,7 +37,10 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
       </Text>
     ),
     labels: { confirm: 'Okay', cancel: 'Cancel' },
-    onCancel: () => console.log('Cancel'),
+    onCancel: () => {
+      console.log('Cancel')
+      reloadValue()
+    },
     onConfirm: () => {
       setServerValue('thing').then((success) => console.log('Confirmed'))
     },
@@ -69,8 +74,8 @@ const MainLayout: FC<{ children: React.ReactNode }> = ({
         position="right"
       >
         <Input
-          value={value}
-          onChange={(e) => setLocalValue(e.currentTarget.value)}
+          value={test}
+          onChange={(e) => setTest(e.currentTarget.value)}
         />
       </Drawer>
     </div>

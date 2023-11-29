@@ -16,12 +16,12 @@ export const useEffect =
 export const useMemo =
   typeof window !== 'undefined' ?
     React.useMemo :
-    (fn: () => any) => fn() as typeof React.useMemo
+    ((fn: () => any) => fn()) as typeof React.useMemo
 
 export const useCallback =
   typeof window !== 'undefined' ?
     React.useCallback :
-    (fn: () => any) => fn as typeof React.useCallback
+    ((fn: () => any | Promise<any>) => fn) as typeof React.useCallback
 
 export const useRef =
   typeof window !== 'undefined' ?

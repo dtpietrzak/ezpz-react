@@ -1,8 +1,11 @@
-import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, ComponentType, UseServerSyncOptions, JSONable } from 'ezpz/types'
+import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, UseServerSyncOptions, JSONable, JSONableObject } from 'ezpz/types'
+import { useContext } from 'react'
 import { isClient, isServer } from './ezpz-utils'
-import { useState, useEffect, useCallback } from './react-wrappers'
+import { useState, useEffect, useCallback, useRef } from './react-wrappers'
 import { nprogress } from '@mantine/nprogress'
 import { useLocation } from './react-router-dom-wrappers'
+import { DataContext } from './components/DataProvider'
+import isDeepEqual from 'fast-deep-equal/react'
 
 
 // render options
@@ -25,7 +28,7 @@ import { useLocation } from './react-router-dom-wrappers'
 //     work this way, regardless of these settings.
 // 
 
-let init = isClient ? window.__ezpz_data__ : undefined
+const init = isClient ? window.__ezpz_data__ : undefined
 let initSsrComplete = false
 if (isClient) {
   window.__ezpz_cache__ = new Map<string, any>()
@@ -37,7 +40,6 @@ const updateCache = (serverSyncId: string, data: any) => {
 
 const loadFunctionStateUpdateTrigger = (
   value: any,
-  componentType: ComponentType,
   serverSyncId?: string
 ) => {
   if (!serverSyncId) return
@@ -45,7 +47,6 @@ const loadFunctionStateUpdateTrigger = (
     new CustomEvent('loadFunctionStateUpdated', {
       detail: {
         value: value,
-        componentType: componentType,
         serverSyncId: serverSyncId,
       }
     })
@@ -54,7 +55,6 @@ const loadFunctionStateUpdateTrigger = (
 
 const loadFunctionStatusUpdateTrigger = (
   status: LoadStatus,
-  componentType: ComponentType,
   serverSyncId?: string
 ) => {
   if (!serverSyncId) return
@@ -62,7 +62,6 @@ const loadFunctionStatusUpdateTrigger = (
     new CustomEvent('loadFunctionStatusUpdated', {
       detail: {
         status: status,
-        componentType: componentType,
         serverSyncId: serverSyncId,
       }
     })
@@ -103,16 +102,21 @@ const promiseNotReady: Promise<false> =
 const promiseSuccess: Promise<true> =
   new Promise((resolve) => resolve(true))
 
-export const useServer = <T extends JSONable>(
+export const useServer = <
+  T extends JSONable | unknown = unknown,
+  U extends JSONableObject | undefined = undefined,
+>(
   initialState: T,
+  { loadFunction, updateFunction }: ServerFunctions<T, U>,
   {
-    loadFunction, updateFunction,
-  }: ServerFunctions<T>,
-  {
-    loadOn = 'client', serverLoadAt = 'runtime',
-    updateAs = 'optimistic', serverSyncId, serverInit,
+    loadOn, serverLoadAt, updateAs, serverSyncId, serverInit,
   }: UseServerOptions<T>,
+  serverLoadData?: U,
 ): UseServerReturn<T> => {
+  if (!loadOn) loadOn = 'client'
+  if (!serverLoadAt) serverLoadAt = 'runtime'
+  if (!updateAs) updateAs = 'optimistic'
+
   if (isServer) {
     if (loadOn === 'client' || !serverInit) {
       return [
@@ -132,19 +136,32 @@ export const useServer = <T extends JSONable>(
     ]
   }
 
-  let componentType: ComponentType = 'unknown'
   let initFromServer = false
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const location = useLocation()
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const serverLoadDataRef = useRef(serverLoadData)
+
+  if (!isDeepEqual(serverLoadDataRef.current, serverLoadData)) {
+    serverLoadDataRef.current = serverLoadData
+  }
+
+  // if server has an init ID for this state
+  if (serverSyncId && init?.[serverSyncId] && loadOn === 'server') {
+    initFromServer = true
+    // override internal initial state with server state
+    if (typeof init[serverSyncId] !== 'undefined') {
+      initialState = init[serverSyncId]
+    }
+  }
 
   if (serverSyncId) {
     // remove layout_ or page_ from serverSyncId
     // so the cache is matched across pages and layouts
     if (serverSyncId.startsWith('layout')) {
       serverSyncId = serverSyncId.substring(6)
-      componentType = 'layout'
     } else if (serverSyncId.startsWith('page')) {
       serverSyncId = serverSyncId.substring(4)
-      componentType = 'page'
     }
     // check if it's already been cached
     if (window.__ezpz_cache__.has(serverSyncId) && init) {
@@ -156,66 +173,63 @@ export const useServer = <T extends JSONable>(
     }
   }
 
-  // if server has an init ID for this state
-  if (serverSyncId && init?.[serverSyncId]) {
-    initFromServer = true
-    // override internal initial state with server state
-    if (typeof init[serverSyncId] !== 'undefined') {
-      initialState = init[serverSyncId]
-    }
-  }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [state, _setLocalState] = useState(initialState)
 
   const setLocalState = (data: React.SetStateAction<T>) => {
     if (typeof data === 'function') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       _setLocalState(data(state))
     } else {
       _setLocalState(data)
     }
     loadFunctionStateUpdateTrigger(
       data,
-      componentType,
       serverSyncId,
     )
   }
 
-  const syncLoadFunctionState = (e) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const syncLoadFunctionState = useCallback((e) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
       _setLocalState(e.detail.value)
     }
-  }
+  }, [serverSyncId])
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [status, _setStatus] = useState<LoadStatus>(
     initFromServer ? 'success' : 'init'
   )
 
-  const setStatus = (loadStatus: LoadStatus) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const setStatus = useCallback((loadStatus: LoadStatus) => {
     _setStatus(loadStatus)
     loadFunctionStatusUpdateTrigger(
       loadStatus,
-      componentType,
       serverSyncId,
     )
-  }
+  }, [serverSyncId])
 
-  const syncLoadFunctionStatus = (e) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const syncLoadFunctionStatus = useCallback((e) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
       _setStatus(e.detail.status)
     }
-  }
+  }, [serverSyncId])
 
   let _error: ErrorMessage | undefined
 
-  const _loadFunction = async (ignore?: boolean) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const _loadFunction = useCallback(async (ignore?: boolean) => {
     _error = undefined
     if (initFromServer && !initSsrComplete) {
       initSsrComplete = true
       return promiseSuccess
     }
-    await loadFunction()
+    await loadFunction(serverLoadData)
       .then(({ data, status, error }) => {
         if (!ignore) {
           if (status === 'success') {
@@ -223,7 +237,6 @@ export const useServer = <T extends JSONable>(
               updateCache(serverSyncId, data)
               loadFunctionStateUpdateTrigger(
                 data,
-                componentType,
                 serverSyncId,
               )
             }
@@ -241,9 +254,10 @@ export const useServer = <T extends JSONable>(
       })
     if (!ignore && _error) throw new Error(_error)
     return true
-  }
+  }, [serverLoadDataRef.current, initFromServer])
 
-  const setServerState = async (data?: React.SetStateAction<T>) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const setServerState = useCallback(async (data?: React.SetStateAction<T>) => {
     _error = undefined
     if (typeof data === 'undefined') data = state
     const lastData = state
@@ -259,7 +273,6 @@ export const useServer = <T extends JSONable>(
         updateCache(serverSyncId, data)
         loadFunctionStateUpdateTrigger(
           data,
-          componentType,
           serverSyncId,
         )
       }
@@ -276,7 +289,6 @@ export const useServer = <T extends JSONable>(
               updateCache(serverSyncId, _data)
               loadFunctionStateUpdateTrigger(
                 (_data),
-                componentType,
                 serverSyncId,
               )
             }
@@ -298,21 +310,24 @@ export const useServer = <T extends JSONable>(
     }
     if (_error) throw new Error(_error)
     return true
-  }
+  }, [state, updateAs, updateFunction, serverSyncId])
 
-  const updateServerPerRequest = async (e) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const updateServerPerRequest = useCallback(async (e) => {
     if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
       setServerState(e.detail.value)
     }
-  }
+  }, [serverSyncId, setServerState])
 
-  const updateClientPerRequest = async (e) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const updateClientPerRequest = useCallback(async (e) => {
     if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
       setStatus('loading')
       _loadFunction()
     }
-  }
+  }, [serverSyncId, setStatus, _loadFunction])
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     window.addEventListener(
       'loadFunctionStateUpdated', syncLoadFunctionState,
@@ -347,8 +362,14 @@ export const useServer = <T extends JSONable>(
         'loadFunctionUpdateClient', updateClientPerRequest,
       )
     })
-  }, [])
+  }, [
+    syncLoadFunctionState,
+    syncLoadFunctionStatus,
+    updateClientPerRequest,
+    updateServerPerRequest,
+  ])
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     let ignore = false
     if (status !== 'init') setStatus('loading')
@@ -356,8 +377,11 @@ export const useServer = <T extends JSONable>(
     return () => {
       ignore = true
     }
+    // disabled because we want changing paths to act like re-loading the hook
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (status === 'loading' || status === 'init') nprogress.start()
     if (status === 'success' || status === 'error') nprogress.complete()
@@ -384,7 +408,6 @@ export const useServerSync = <T extends JSONable>(
 ): UseServerReturn<T> => {
   serverSyncId = `__dev_defined__${serverSyncId}`
   if (serverInit) initialState = serverInit
-  let componentType: ComponentType = 'unknown'
 
   if (isClient) {
     // check if it's already been cached
@@ -392,6 +415,14 @@ export const useServerSync = <T extends JSONable>(
       // if so, override the init object for this serverSyncId
       init[serverSyncId] = window.__ezpz_cache__.get(serverSyncId)
     }
+  }
+
+  const { data } = useContext(DataContext)
+  if (data?.[serverSyncId]) {
+    // override internal initial state with server state
+    // @ts-expect-error - this is a hack to get around the fact that
+    // data[serverSyncId] is not typed as T
+    initialState = data[serverSyncId]
   }
 
   if (init?.[serverSyncId] && typeof init[serverSyncId] !== 'undefined') {
@@ -411,25 +442,24 @@ export const useServerSync = <T extends JSONable>(
     if (syncLocalChanges) {
       loadFunctionStateUpdateTrigger(
         data,
-        componentType,
         serverSyncId,
       )
     }
   }
 
-  const syncLoadFunctionState = (e) => {
+  const syncLoadFunctionState = useCallback((e) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
       _setLocalState(e.detail.value)
     }
-  }
+  }, [serverSyncId])
 
-  const syncLoadFunctionStatus = (e) => {
+  const syncLoadFunctionStatus = useCallback((e: any) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
       setStatus(e.detail.status)
     }
-  }
+  }, [serverSyncId])
 
   const setServerState = async (data?: React.SetStateAction<T>) => {
     loadFunctionUpdateServerTrigger(data, serverSyncId)
@@ -459,7 +489,7 @@ export const useServerSync = <T extends JSONable>(
         'loadFunctionStatusUpdated', syncLoadFunctionStatus,
       )
     })
-  }, [])
+  }, [syncLoadFunctionState, syncLoadFunctionStatus])
 
   return [
     state,

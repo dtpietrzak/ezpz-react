@@ -19,24 +19,46 @@ export type ServerResponse<T extends JSONable | unknown = unknown> = {
   status: LoadStatus,
 }
 
-export type LoadFunction<T extends JSONable | unknown = unknown> =
-  () => Promise<ServerResponse<T>>
+export type LoadFunction<
+  T extends (JSONable | unknown) = unknown,
+  U extends (JSONableObject | undefined) = undefined,
+> =
+  (data?: U) => Promise<ServerResponse<T>>
 
-export type UpdateFunction<T extends JSONable | unknown = unknown> =
+export type UpdateFunction<T extends (JSONable | unknown) = unknown> =
   (data?: React.SetStateAction<T>) => Promise<ServerResponse<T>>
 
-export type ServerFunctions<T extends JSONable | unknown = unknown> = {
-  loadFunction: LoadFunction<T>
+export type ServerFunctions<
+  T extends (JSONable | unknown) = unknown,
+  U extends (JSONableObject | undefined) = undefined,
+> = {
+  loadFunction: LoadFunction<T, U>
   updateFunction?: UpdateFunction<T>
 }
 
-export type UseServerOptions<T extends JSONable | unknown = unknown> = {
+export type UseServerOptions<T extends (JSONable | unknown) = unknown> = {
   loadOn?: 'client' | 'server'
   serverInit?: T
   serverSyncId?: string
   serverLoadAt?: 'compile' | 'runtime'
   updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
 }
+
+export type UseServer<
+  T extends JSONable | unknown = unknown,
+  U extends JSONableObject | undefined = undefined,
+> = (
+  initialState: T,
+  { loadFunction, updateFunction }: ServerFunctions<T, U>,
+  {
+    loadOn,
+    serverLoadAt,
+    updateAs,
+    serverSyncId,
+    serverInit,
+  }: UseServerOptions<T>,
+  serverLoadData?: U,
+) => UseServerReturn<T>
 
 export type UseServerSyncOptions<T extends JSONable | unknown = unknown> = {
   syncLocalChanges?: boolean
@@ -103,13 +125,22 @@ export type LayoutCSR = {
 
 export type Entry<T> = [string, T]
 
-export type ComponentType = 'page' | 'layout' | 'component' | 'unknown'
+export type JSONable =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONableObject
+  | JSONableArray
 
-
-export type JSONable = string | number | boolean | null | JSONableObject | JSONableArray;
-
-interface JSONableObject {
-  [key: string]: JSONable;
+export type JSONableObject = {
+  [key: string]: JSONable
 }
 
-interface JSONableArray extends Array<JSONable> { }
+export type JSONableArray = Array<JSONable>
+
+
+
+export type LayoutFC = React.FC<{
+  children: React.ReactNode
+}>

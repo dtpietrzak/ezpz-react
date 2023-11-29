@@ -1,6 +1,7 @@
 import { getBundlePaths } from 'ezpz/build'
 import { updateRoutes } from 'ezpz/server'
-import { Entry, LayoutSSR, LoadFunctionData, RouteSSR } from 'ezpz/types'
+import { DataProvider } from 'ezpz/tools/components/DataProvider'
+import { Entry, LayoutSSR, RouteSSR } from 'ezpz/types'
 import { renderToString } from 'react-dom/server'
 
 export const scriptsToInject = (scriptsSrc: string[]) => {
@@ -21,7 +22,7 @@ export const htmlFromRoute = async (
   cssSrcInjection?: string,
 ): Promise<string> => {
 
-  let funcEntriesForLayout: Entry<any>[] = []
+  const funcEntriesForLayout: Entry<any>[] = []
 
   if (layout) {
     for (let i = 0; i < layout.Layouts.length; i++) {
@@ -61,17 +62,13 @@ export const htmlFromRoute = async (
     }
   }
 
-  const allFuncsEntries = [...funcEntriesForPage, ...funcEntriesForLayout]
-
-  console.log(allFuncsEntries)
-
   const allFuncsObject = {
-    ...funcEntriesForPage,
-    ...funcEntriesForLayout,
+    ...funcObjectForPage,
+    ...funcObjectForLayout,
   }
 
-  let html = `${renderToString(
-    <App pageConfig={route.config}>
+  const html = `${renderToString(
+    <App pageConfig={route.config} data={allFuncsObject}>
       <WithLayoutsSSR />
     </App>
   )
@@ -79,14 +76,14 @@ export const htmlFromRoute = async (
     .replace('__css_injection__', cssSrcInjection || '')}
   <script>window.__ezpz_data__ = ${JSON.stringify(allFuncsObject)}</script>`
 
-  allFuncsEntries.forEach((entry) => {
-    const key = entry[0]
-      .replace('layout__dev_defined__', '')
-      .replace('page__dev_defined__', '')
-    html = html.replaceAll(
-      `__$!replace!$__${key}__$!replace!$__`, JSON.stringify(entry[1]),
-    )
-  })
+  // allFuncsEntries.forEach((entry) => {
+  //   const key = entry[0]
+  //     .replace('layout__dev_defined__', '')
+  //     .replace('page__dev_defined__', '')
+  //   html = html.replaceAll(
+  //     `__$!replace!$__${key}__$!replace!$__`, JSON.stringify(entry[1]),
+  //   )
+  // })
 
   return html
 }

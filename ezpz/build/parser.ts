@@ -121,7 +121,7 @@ export const parseComponent = (filePath: string, fileContents: string) => {
                 throw new Error(`serverSyncId must be unique to each useSever hook, see: ${defaultExportName} / ${prop.value.value}. If you want to use the same value elsewhere, check out the useServerSync hook`)
               }
               devDefinedInitIdUnique.set(prop.value.value, defaultExportName)
-              loadFunctionUid = `${componentType}__dev_defined__${prop.value.value}`
+              loadFunctionUid = `__dev_defined__${prop.value.value}`
               prop.value.value = loadFunctionUid
             } else {
               throw new Error(`serverSyncId must be a string, see: ${defaultExportName}`)
@@ -130,7 +130,7 @@ export const parseComponent = (filePath: string, fileContents: string) => {
         })
 
         if (!loadFunctionUid) {
-          const lf_cui = `${componentType}_lf_${uuidv4().replaceAll('-', '_')}`
+          const lf_cui = `lf_${uuidv4().replaceAll('-', '_')}`
           loadFunctionUid = lf_cui
           node.declarations[0].init.arguments[2].properties.push(
             t.objectProperty(
@@ -163,14 +163,15 @@ export const parseComponent = (filePath: string, fileContents: string) => {
         const variables = node.declarations[0].id.elements
         checkVariableNames(variables)
 
-        const loadFunctionUid: string = `"__$!replace!$__${node.declarations[0].init.arguments[0].value}__$!replace!$__"`
+        // const loadFunctionUid: string = `"__$!replace!$__${node.declarations[0].init.arguments[0].value}__$!replace!$__"`
+        // const loadFunctionUid: string = `"${node.declarations[0].init.arguments[0].value}"`
 
-        node.declarations[0].init.arguments[2].properties.push(
-          t.objectProperty(
-            t.identifier('serverInit'),
-            t.identifier(loadFunctionUid),
-          ),
-        )
+        // node.declarations[0].init.arguments[2].properties.push(
+        //   t.objectProperty(
+        //     t.identifier('serverInit'),
+        //     t.identifier(loadFunctionUid),
+        //   ),
+        // )
       }
     }
   })

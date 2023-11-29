@@ -2,6 +2,7 @@ import { FC } from "react"
 
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { routes } from 'build/routing/routes_for_csr'
 import Layouts from './Layouts'

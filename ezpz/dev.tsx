@@ -1,6 +1,8 @@
 process.env.NODE_ENV = 'development'
 process.env.isServer = 'true'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as React from 'react'
 import { prepServer, startServer, stopServer } from './server'
 import { build, rebuild, esbuildContext, } from "./build"
 import expressWebSocket from 'express-ws'
@@ -41,7 +43,7 @@ export const watcher = chokidar.watch('src/', {
   console.log(`\n${eventName} ${path}`)
   try {
     console.time('dev-build-time')
-    let newResult = await rebuild(isCachingBuilds)
+    const newResult = await rebuild(isCachingBuilds)
 
     let message = JSON.stringify({
       type: "reload",
@@ -125,15 +127,15 @@ await new Promise((resolve) => process.once("SIGINT", resolve));
 try {
   console.log('closing watcher')
   await watcher.close();
-} catch { }
+} catch (err) { console.log(err) }
 try {
   console.log('disposing esbuild context')
   await esbuildContext.dispose()
-} catch { }
+} catch (err) { console.log(err) }
 try {
   console.log('stopping server')
   await stopServer()
-} catch { }
+} catch (err) { console.log(err) }
 
 
 

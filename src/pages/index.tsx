@@ -1,10 +1,8 @@
 import {
-  useServer,
   Link,
   Page,
   LoadHandler,
   useServerSync,
-  useEffect,
 } from 'ezpz'
 import { PageConfig } from 'ezpz/types'
 import Button from './_components/Button'
@@ -16,20 +14,10 @@ export const config: PageConfig = {
   description: 'Home page description',
 }
 
-// you could make a provider that allows you to jump down levels
-// add an option to useServer, like "contextKey"
-// this has to be unique across the entire app
-// then you can use that to jump down levels like:
-// const [value, setLocalValue, setServerValue, statusOfValue] = useServerData<string>('contextKey')
-
 const Home = () => {
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
     useServerSync<string>('page_comp', '', {})
-
-  useEffect(() => {
-    console.log('value changed', value)
-  }, [])
 
   return (
     <Page config={config} id='page_comp'>
