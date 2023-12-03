@@ -12,9 +12,10 @@ export const hmrPlugin = {
 
     const IS_FAST_REFRESH_ENABLED = /\$RefreshReg\$\(/
 
-    const appDir = path.join(process.cwd(), "src")
+    const appDir = path.join(process.cwd(), "build")
 
     build.onLoad({ filter: /.*/, namespace: "file" }, (args) => {
+
       if (
         !args.path.match(/\.[tj]sx?$/) ||
         !fs.existsSync(args.path) ||
@@ -23,16 +24,15 @@ export const hmrPlugin = {
         return undefined
       }
 
-      const hmrId = JSON.stringify(
-        path.relative(process.cwd(), args.path)
-      )
+      const hmrId = path.relative(process.cwd(), args.path)
       const hmrPrefix = fs
         .readFileSync("ezpz/scripts/hmr-prefix.ts", "utf8")
         .replace(
           `import * as __hmr__ from "./hmr-runtime";`,
           `import * as __hmr__ from "hmr:runtime";`
         )
-        .replace(/\$id\$/g, hmrId)
+        .replace(/"\$id\$"/g, `"${hmrId.replace(/ /g, '')}"`)
+
       const sourceCode = fs.readFileSync(args.path, "utf8")
 
       const sourceCodeWithHMR = hmrPrefix + sourceCode
@@ -62,29 +62,30 @@ export const hmrPlugin = {
       if (!jsWithReactRefresh) throw new Error("jsWithReactRefresh is null")
 
       if (IS_FAST_REFRESH_ENABLED.test(jsWithReactRefresh)) {
-        resultCode =
-          `
-        if (!window.$RefreshReg$ || !window.$RefreshSig$ || !window.$RefreshRuntime$) {
-          console.warn('@remix-run/react-refresh: HTML setup script not run. React Fast Refresh only works when Remix serves your HTML routes. You may want to remove this plugin.');
-        } else {
-          var prevRefreshReg = window.$RefreshReg$;
-          var prevRefreshSig = window.$RefreshSig$;
-          window.$RefreshReg$ = (type, id) => {
-            window.$RefreshRuntime$.register(type, ${JSON.stringify(
-            hmrId
-          )} + id);
-          }
-          window.$RefreshSig$ = window.$RefreshRuntime$.createSignatureFunctionForTransform;
+        resultCode = `
+        var prevRefreshReg = window.$RefreshReg$;
+        var prevRefreshSig = window.$RefreshSig$;
+        var RefreshRuntime = require('react-refresh/runtime');
+
+        window.$RefreshReg$ = (type, id) => {
+          const fullId =  "${hmrId} " + id;
+          RefreshRuntime.register(type, fullId);
         }
-      ` +
-          jsWithReactRefresh +
-          `
-        window.$RefreshReg$ = prevRefreshReg;
-        window.$RefreshSig$ = prevRefreshSig;
+
+        window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+
+        ${jsWithReactRefresh}
+
+        try {
+          
+        } finally {
+          window.$RefreshReg$ = prevRefreshReg;
+          window.$RefreshSig$ = prevRefreshSig;
+        }
+
         import.meta.hot.accept(({ module }) => {
           window.$RefreshRuntime$.performReactRefresh();
-        });
-      `
+        });`
       }
 
       return {

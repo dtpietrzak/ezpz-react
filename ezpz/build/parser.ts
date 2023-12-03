@@ -4,7 +4,7 @@ import * as t from '@babel/types'
 import { transformFromAstSync, traverse } from '@babel/core'
 import { _LoadFunctionDataBuilder } from 'ezpz/types'
 
-const devDefinedInitIdUnique: Map<string, string> = new Map()
+export const devDefinedInitIdUnique: Map<string, string> = new Map()
 
 export const parseComponent = (filePath: string, fileContents: string) => {
   const componentType = filePath.endsWith('index.tsx') ? 'page' : 'layout'

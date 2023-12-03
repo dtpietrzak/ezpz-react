@@ -18,7 +18,6 @@ export const build = async (withCache?: boolean): Promise<BuildResult> => {
   await buildPages(withCache)
   await buildRoutes()
   await buildLayouts()
-  // await buildRoutes2(withCache)
   await buildPostcss()
   return await buildBundle()
 }
@@ -27,7 +26,6 @@ export const rebuild = async (withCache?: boolean): Promise<BuildResult> => {
   await buildPages(withCache)
   await buildRoutes()
   await buildLayouts()
-  // await buildRoutes2(withCache)
   await buildPostcss()
   return await buildBundle()
 }

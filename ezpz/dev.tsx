@@ -12,8 +12,9 @@ import chokidar from 'chokidar'
 import { updateRoutesWithNewBuild } from './server/helpers'
 import express from 'express'
 import { port } from 'src/server'
+import open from 'open'
 
-const isCachingBuilds = false
+const isCachingBuilds = true
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 let buildResult: UnwrapPromise<ReturnType<typeof build>>
@@ -24,7 +25,7 @@ export const ws_app = ws.app
 ws_app.ws("/__hmr__", (ws, req) => {
   console.log('server to client connection established')
 })
-app_for_ws?.listen(port+1, () => {
+app_for_ws?.listen(port + 1, () => {
   console.log('ws server listening on port 3001')
 })
 
@@ -35,6 +36,7 @@ const initServer = async () => {
   await prepServer()
   await updateRoutesWithNewBuild(buildResult)
   await startServer()
+  open(`http://localhost:${port}`)
 }
 
 export const watcher = chokidar.watch('src/', {
@@ -57,19 +59,20 @@ export const watcher = chokidar.watch('src/', {
         buildResult.metafile.outputs
       ).reduce((acc, [outputFile, output]) => {
         Object.keys(output.inputs).forEach((input) => {
-          if (lastInputsSet.has(input)) {
+          if (lastInputsSet.has(input) && input.startsWith('build/')) {
             acc[input] = outputFile
           }
         })
         return acc
       }, {})
+
       if (!newResult.metafile) throw new Error('no metafile in new build result')
       const newInputsSet = new Set(Object.keys(newResult.metafile.inputs))
       const newInputToOutput = Object.entries(
         newResult.metafile.outputs
       ).reduce((acc, [outputFile, output]) => {
         Object.keys(output.inputs).forEach((input) => {
-          if (newInputsSet.has(input)) {
+          if (newInputsSet.has(input) && input.startsWith('build/')) {
             acc[input] = outputFile
           }
         })
@@ -103,13 +106,11 @@ export const watcher = chokidar.watch('src/', {
 
     console.timeEnd('dev-build-time')
 
+    console.log('message: ', JSON.parse(message))
+
     const clients = ws.getWss().clients;
+    console.log('clients.size: ', clients.size)
     if (clients.size > 0) {
-      console.log(
-        "Send reload to",
-        clients.size,
-        "client" + (clients.size > 1 ? "s" : "")
-      )
       clients.forEach((socket) => {
         socket.send(message)
       })

@@ -5,14 +5,24 @@ import { hmrPlugin } from './plugins/hmr-plugin'
 
 let init = false
 
+// isolate everything before the routes from the rest of the app
+
 const esbuildConfig = {
   entryPoints: {
     bundle: 'ezpz/scripts/client-script.tsx',
+    root: 'ezpz/tools/components/ProvidersForClient.tsx',
+    app: 'build/app.tsx',
+    css: 'build/app.css',
+    layouts_tool: 'ezpz/tools/components/Layouts.tsx',
+    layouts: 'build/layouts/layouts_for_csr.tsx',
+    routes: 'build/routing/routes_for_csr.tsx',
     hmr: "ezpz/scripts/hmr-entrypoint.ts",
+    ezpz: "ezpz",
     react: "react",
     "react-dom": "react-dom",
     "react-refresh/runtime": "react-refresh/runtime",
   },
+  
   outdir: 'bundle',
 
   entryNames: "[name]-[hash]",
@@ -20,14 +30,14 @@ const esbuildConfig = {
   chunkNames: "[name]-[hash]",
 
   bundle: true,
-  // splitting: true,
-  minify: true,
+  splitting: true,
+  minify: false,
   sourcemap: true,
   metafile: true,
 
   format: "esm" as esbuild.Format,
   logLevel: "warning" as esbuild.LogLevel,
-  jsx: "automatic" as "automatic",
+  jsx: "automatic" as const,
 
   target: "esnext",
   platform: "browser" as esbuild.Platform,
@@ -51,7 +61,7 @@ const esbuildConfig = {
     hmrRuntimePlugin,
     hmrPlugin,
   ],
-}
+} satisfies esbuild.BuildOptions
 
 export let esbuildContext: esbuild.BuildContext<typeof esbuildConfig>
 
@@ -68,7 +78,7 @@ export const buildBundle = async () => {
   console.time('build-bundle')
 
   if (!esbuildContext) throw new Error("esbuildContext is undefined")
-  let buildResult = await esbuildContext.rebuild()
+  const buildResult = await esbuildContext.rebuild()
 
   console.timeEnd('build-bundle')
   return buildResult

@@ -33,7 +33,7 @@ const ProvidersForClient: FC = () => {
 
   return (
     <BrowserRouter>
-      <ProvidersForServerAndClient>
+      <ProvidersForServerAndClient data={{}}>
         <Layouts>
           <Routes>
             {routes.map((route) => {

@@ -4,7 +4,7 @@ import {
   LoadHandler,
   useServerSync,
 } from 'ezpz'
-import { PageConfig } from 'ezpz/types'
+import { PageConfig, PageFC } from 'ezpz/types'
 import Button from './_components/Button'
 import { TextInput } from '@mantine/core'
 import { Carousel } from '@mantine/carousel'
@@ -14,7 +14,7 @@ export const config: PageConfig = {
   description: 'Home page description',
 }
 
-const Home = () => {
+const Home: PageFC = () => {
 
   const [value, setLocalValue, setServerValue, statusOfValue] =
     useServerSync<string>('page_comp', '', {})
@@ -43,7 +43,7 @@ const Home = () => {
         onClick={() => setServerValue(value)}
         disabled={statusOfValue !== 'success'}
       >
-        Update Server
+        Update Server 9
       </Button>
       <LoadHandler
         status={statusOfValue}

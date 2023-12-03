@@ -14,16 +14,16 @@ const MainLayout: LayoutFC = ({
 
   const [value, setLocalValue, setServerValue, statusOfValue, reloadValue] =
     useServer('', {
-      loadFunction: async (data) => (
-        (await fetch(`http://localhost:3000/api?test=${data?.thing || 'poo'}`)).json()
-      ),
-      updateFunction: async (data) => (
-        (await fetch('http://localhost:3000/api', {
+      loadFunction: async (data) => ((
+        await fetch(`http://localhost:3000/api?test=${data?.thing || 'poo'}`)
+      ).json()),
+      updateFunction: async (data) => ((
+        await fetch('http://localhost:3000/api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: data })
-        })).json()
-      ),
+        })
+      ).json()),
     }, {
       loadOn: 'client',
       serverSyncId: 'page_comp',
@@ -50,19 +50,19 @@ const MainLayout: LayoutFC = ({
     <div className={cm('w-full h-full bg-slate-800')}>
       <div className={cm('w-full h-12 bg-slate-700 flex justify-between items-center px-4')}>
         <div className={cm('text-white flex items-center h-12 text-2xl font-bold align-middle font-mono')}>
-          ezpz - {value + '  ' + statusOfValue}
+          ezpz
         </div>
         <div
           className={cm('text-white text-2xl font-bold align-middle cursor-pointer')}
           onClick={openModal}
         >
-          {time}
+          ez budget
         </div>
         <Button
           className={cm('text-white text-2xl font-bold align-middle')}
           onClick={openDrawer}
         >
-          menu
+          more
         </Button>
       </div>
       {children}

@@ -15,4 +15,8 @@ interface ImportMeta {
 interface Window {
   __ezpz_data__: Record<string, any>;
   __ezpz_cache__: Map<string, any>;
+
+  $RefreshReg$: any;
+  $RefreshSig$: any;
+  $RefreshRuntime$: any;
 }

@@ -8,16 +8,9 @@ if (!window.__hmr__) {
   function incrementPortInUrl(url) {
     const urlObject = new URL(url)
 
-    // Extract the port number from the URL
     let port: string = urlObject.port
-
-    // Increment the port by 1
     port = (parseInt(port, 10) + 1).toString()
-
-    // Set the new port in the URL object
     urlObject.port = port
-
-    // Convert the URL object back to a string
     const updatedUrl = urlObject.toString()
 
     return updatedUrl
@@ -28,19 +21,19 @@ if (!window.__hmr__) {
     incrementPortInUrl(window.location.href.replace(/^http(s)?:/, "ws$1:"))
   )
   const socket = (window.__hmr__.socket = new WebSocket(socketURL.href))
+
   socket.addEventListener("message", async (event) => {
     const payload = JSON.parse(event.data)
-    // console.log('here7')
+    console.log('here7')
     switch (payload?.type) {
       case "reload":
-        // console.log('here8: ', payload)
+        console.log('here8: ', payload)
         window.location.reload()
         break;
-      case "hmr":
-        // console.log('here9: ', payload)
+      case "hmr": (async () => {
+        console.log('here9: ', payload)
         if (!payload.updates?.length) return;
 
-        // eslint-disable-next-line no-case-declarations
         let anyAccepted = false
         for (const update of payload.updates) {
           if (window.__hmr__.contexts[update.id]) {
@@ -58,10 +51,10 @@ if (!window.__hmr__) {
           console.log("[HMR] Updated rejected, reloading...")
           window.location.reload()
         }
+      })()
         break;
     }
   })
-
 }
 
 
@@ -72,7 +65,7 @@ export function createHotContext(id: string): ImportMetaHot {
 
   const hot = {
     accept: (cb) => {
-      // console.log('here0', id)
+      console.log('here0', id)
       if (disposed) {
         throw new Error("import.meta.hot.accept() called after dispose()")
       }
@@ -82,15 +75,14 @@ export function createHotContext(id: string): ImportMetaHot {
       callback = cb
     },
     dispose: () => {
-      // console.log('here1', id)
-      disposed = true
+      console.log('here1', id)
+      // disposed = true
       callback = undefined
     },
     emit(self: ModuleNamespace) {
-      // console.log('here2', id)
+      console.log('here2', id)
       if (disposed) {
-        return true
-        // throw new Error("import.meta.hot.emit() called after dispose()")
+        throw new Error("import.meta.hot.emit() called after dispose()")
       }
 
       if (callback) {
@@ -99,10 +91,11 @@ export function createHotContext(id: string): ImportMetaHot {
       }
       return false
     },
+    callback: callback,
   }
 
   if (window.__hmr__.contexts[id]) {
-    // console.log('here3', id)
+    console.log('here3', id)
 
     window.__hmr__.contexts[id].dispose()
     window.__hmr__.contexts[id] = undefined

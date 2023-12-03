@@ -15,6 +15,7 @@ var prevRefreshSig = window.$RefreshSig$;
 
 window.$RefreshReg$ = (type, id) => {
   const fullId = id;
+  console.log("Registering", type, id)
   RefreshRuntime.register(type, fullId);
 };
 window.$RefreshReg$ = prevRefreshReg;

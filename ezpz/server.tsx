@@ -1,7 +1,9 @@
 import { URL } from 'url'
 import express, { Router, Request, Response, Application, Express } from 'express'
+import cookieParser from 'cookie-parser'
 import { LayoutSSR, RouteSSR } from 'ezpz/types'
 import { port, serverRoutes } from 'src/server'
+import { middleware } from 'src/server/middleware'
 
 
 let server: ReturnType<Application['listen']> | null = null
@@ -16,6 +18,7 @@ export const prepServer = async () => {
   router = Router()
   app = express()
   app.use(express.json())
+  app.use(cookieParser())
   app.use(
     '/bundle',
     express.static(`${__dirname}/../bundle/`),
@@ -24,6 +27,8 @@ export const prepServer = async () => {
     '/bundle/main.css',
     express.static(`${__dirname}/../bundle/main.css`),
   )
+
+  app.use(middleware)
 
   await serverRoutes(router)
 }
@@ -49,7 +54,6 @@ export const stopServer = async () => {
         console.log('server closed')
         resolve(true)
       })
-      resolve(true)
     } else {
       reject('server is not defined')
     }

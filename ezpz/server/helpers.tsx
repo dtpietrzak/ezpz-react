@@ -1,6 +1,5 @@
 import { getBundlePaths } from 'ezpz/build'
 import { updateRoutes } from 'ezpz/server'
-import { DataProvider } from 'ezpz/tools/components/DataProvider'
 import { Entry, LayoutSSR, RouteSSR } from 'ezpz/types'
 import { renderToString } from 'react-dom/server'
 
@@ -67,13 +66,15 @@ export const htmlFromRoute = async (
     ...funcObjectForLayout,
   }
 
-  const html = `${renderToString(
-    <App pageConfig={route.config} data={allFuncsObject}>
-      <WithLayoutsSSR />
-    </App>
-  )
-    .replace('__script_injection__', scriptInjection || '')
-    .replace('__css_injection__', cssSrcInjection || '')}
+  const html =
+    `<!DOCTYPE html>
+      ${renderToString(
+      <App pageConfig={route.config} data={allFuncsObject}>
+        <WithLayoutsSSR />
+      </App>
+    )
+      .replace('__script_injection__', scriptInjection || '')
+      .replace('__css_injection__', cssSrcInjection || '')}
   <script>window.__ezpz_data__ = ${JSON.stringify(allFuncsObject)}</script>`
 
   // allFuncsEntries.forEach((entry) => {
@@ -93,12 +94,18 @@ export const updateRoutesWithNewBuild = async (_buildResult) => {
   const injections = getBundlePaths(_buildResult)
   const App = (await import('build/app')).default
 
+  // ${scriptsToInject([injections.js[1]])}
+
   await updateRoutes(async (route, layout) => {
     return await htmlFromRoute(
       route,
       App,
       layout,
-      scriptsToInject(injections.js),
+      `<script type="module" src=${injections.js[1]}></script>
+      <script type="module">
+        import * as entry from ${injections.js[0]};
+        entry.run();
+      </script>`,
       injections.css,
     )
   })

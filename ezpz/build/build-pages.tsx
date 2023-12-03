@@ -1,5 +1,5 @@
 import fs from 'fs'
-import parseComponent from './parser'
+import parseComponent, { devDefinedInitIdUnique } from './parser'
 import crypto from 'crypto'
 
 // server side component needs to take a prop from the load functions for each load function that exists in the page component.
@@ -7,6 +7,7 @@ import crypto from 'crypto'
 // we'll need ot import them like we import the page's config, and it'd also be nice to extract them and export them from the component itself as well, this way the dev doesn't have to think about it and they can just add the prop to the useServer hook.
 
 const buildPages = async (withCache: boolean = true): Promise<void> => {
+  devDefinedInitIdUnique.clear()
 
   return new Promise((resolve, reject) => {
     console.time('build-pages')
@@ -74,16 +75,12 @@ const buildPages = async (withCache: boolean = true): Promise<void> => {
           if (!component?.fileContentsCsr) return
           if (!component?.fileContentsSsr) return
 
-          let csrFileContents = component.fileContentsCsr
-          let ssrFileContents = component.fileContentsSsr
-
-
           if (!fs.existsSync(newFilePath_Dir_ssr)) {
             fs.mkdirSync(newFilePath_Dir_ssr, { recursive: true })
           }
           fs.writeFileSync(
             newFilePath_ssr,
-            ssrFileContents,
+            component.fileContentsSsr,
           )
 
           if (!fs.existsSync(newFilePath_Dir_csr)) {
@@ -91,7 +88,7 @@ const buildPages = async (withCache: boolean = true): Promise<void> => {
           }
           fs.writeFileSync(
             newFilePath_csr,
-            csrFileContents,
+            component.fileContentsCsr,
           )
 
           console.log('updated page: ', filePath)

@@ -19,8 +19,9 @@ const App: React.FC<AppProps> = ({
   const title = pageConfig?.title ?? config.global_page_config?.title
 
   return (
-    <html>
+    <html lang='en'>
       <head>
+        <meta charSet='UTF-8' />
         {(title) ? <title>{title}</title> : null}
         <Meta name='description'
           pageValue={pageConfig?.description}

@@ -144,3 +144,5 @@ export type JSONableArray = Array<JSONable>
 export type LayoutFC = React.FC<{
   children: React.ReactNode
 }>
+
+export type PageFC = React.FC<Record<string, never>>
