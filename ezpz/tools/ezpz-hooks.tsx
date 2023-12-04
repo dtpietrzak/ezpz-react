@@ -314,6 +314,7 @@ export const useServer = <
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const updateServerPerRequest = useCallback(async (e) => {
+    console.log('update server request: ', e.detail)
     if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
       setServerState(e.detail.value)
     }
@@ -462,7 +463,13 @@ export const useServerSync = <T extends JSONable>(
   }, [serverSyncId])
 
   const setServerState = async (data?: React.SetStateAction<T>) => {
-    loadFunctionUpdateServerTrigger(data, serverSyncId)
+    let _data: T | undefined
+    if (typeof data === 'function') {
+      _data = data(state)
+    } else {
+      _data = data
+    }
+    loadFunctionUpdateServerTrigger(_data, serverSyncId)
     return false
   }
 

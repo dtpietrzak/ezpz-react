@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import { LayoutSSR, RouteSSR } from 'ezpz/types'
 import { port, serverRoutes } from 'src/server'
 import { middleware } from 'src/server/middleware'
+import rateLimit from 'express-rate-limit'
 
 
 let server: ReturnType<Application['listen']> | null = null
@@ -15,6 +16,14 @@ export let app: Express | null = null
 
 
 export const prepServer = async () => {
+  const limiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    // store: ... , // Use an external store for consistency across multiple server instances.
+  })
+
   router = Router()
   app = express()
   app.use(express.json())
@@ -27,6 +36,7 @@ export const prepServer = async () => {
     '/bundle/main.css',
     express.static(`${__dirname}/../bundle/main.css`),
   )
+  app.use(limiter)
 
   app.use(middleware)
 

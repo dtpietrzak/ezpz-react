@@ -14,7 +14,8 @@ import express from 'express'
 import { port } from 'src/server'
 import open from 'open'
 
-const isCachingBuilds = true
+const isCachingBuilds = false
+const shouldOpenBrowser = false
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 let buildResult: UnwrapPromise<ReturnType<typeof build>>
@@ -36,7 +37,7 @@ const initServer = async () => {
   await prepServer()
   await updateRoutesWithNewBuild(buildResult)
   await startServer()
-  open(`http://localhost:${port}`)
+  shouldOpenBrowser ?? open(`http://localhost:${port}`)
 }
 
 export const watcher = chokidar.watch('src/', {

@@ -1,7 +1,7 @@
 export const config = {
-  app_name: 'ezpz',
+  app_name: 'ez spend',
   global_page_config: {
-    title: 'ezpz',
+    title: 'ez spend',
     description: '',
     keywords: '',
     author: '',

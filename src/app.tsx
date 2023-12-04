@@ -22,6 +22,7 @@ const App: React.FC<AppProps> = ({
     <html lang='en'>
       <head>
         <meta charSet='UTF-8' />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         {(title) ? <title>{title}</title> : null}
         <Meta name='description'
           pageValue={pageConfig?.description}
