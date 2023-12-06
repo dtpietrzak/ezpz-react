@@ -60,10 +60,33 @@ export const TransactionItem: FC<TransactionItemProps> = ({
             <EditText size='sm' fw={500} mb='lg' c='dimmed'
               loadStatus={statusOfData}
               value={new Date(transaction.date).toLocaleDateString().split('/').slice(0, 2).join('/')}
-              valueOnEdit={new Date(transaction.date).toLocaleString()}
               onSave={(newVal) => {
+                const earlyReturn = () => {
+                  onEdit(
+                    transaction.date,
+                    'date',
+                  )
+                }
+
+                // make sure newVal only has numbers and slashes
+                newVal = newVal.replace(/[^0-9/]/g, '')
+                const newValSplit = newVal.split('/')
+                if (newValSplit.length !== 2) return earlyReturn()
+
+                const date = new Date(transaction.date)
+                const month = parseInt(newValSplit[0])
+                const day = parseInt(newValSplit[1])
+                if (!month || !day) return
+                if (month > 12 || month < 1) return earlyReturn()
+                if (day > 31 || day < 1) return earlyReturn()
+                date.setMonth(month - 1)
+                date.setDate(day)
+
+                // if the date is invalid, don't save
+                if (isNaN(date.getTime())) return earlyReturn()
+
                 onEdit(
-                  new Date(newVal).getTime(),
+                  date.getTime(),
                   'date',
                 )
               }}
