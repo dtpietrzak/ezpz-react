@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "outDir": "./prod_build",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "ezpz": ["./ezpz"],
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "ezpz/**/*.ts",
+    "ezpz/**/*.tsx",
+    "bundle/**/*.ts",
+    "bundle/**/*.tsx",
+    "build/**/*.ts",
+    "build/**/*.tsx",
+  ],
+  "exclude": [
+    "node_modules",
+    "ezpz/dev.tsx",
+    "ezpz/build/index.ts",
+    "ezpz/prod_build.tsx",
+  ],
+  "ts-node": {
+    "files": true,
+    "require": ["tsconfig-paths/register"],
+  }
+}

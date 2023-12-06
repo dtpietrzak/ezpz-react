@@ -1,8 +1,9 @@
 module.exports = {
   apps: [{
     name: "ez-spend",
-    script: "./start.sh",
-    exec_mode: "fork",
+    script: "npm",
+    args: "run prod",
+    exec_mode: "fork", 
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',

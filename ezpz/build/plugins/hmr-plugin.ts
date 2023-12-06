@@ -15,6 +15,10 @@ export const hmrPlugin = {
     const appDir = path.join(process.cwd(), "build")
 
     build.onLoad({ filter: /.*/, namespace: "file" }, (args) => {
+      if (process.env.NODE_ENV === 'production') return {
+        contents: '',
+        loader: args.path.endsWith("x") ? "tsx" : "ts",
+      }
 
       if (
         !args.path.match(/\.[tj]sx?$/) ||

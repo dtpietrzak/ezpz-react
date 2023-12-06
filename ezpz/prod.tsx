@@ -1,21 +1,22 @@
-process.env.NODE_ENV = 'production'
+process.env.NODE_ENV = 'development'
 process.env.isServer = 'true'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as React from 'react'
 import { prepServer, startServer, stopServer } from './server'
 import { build, esbuildContext, } from "./build"
+
 import { updateRoutesWithNewBuild } from './server/helpers'
 
-const isCachingBuilds = true
+const isCachingBuilds = false
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 let buildResult: UnwrapPromise<ReturnType<typeof build>>
 
 const initServer = async () => {
-  console.time('prod-build-time')
+  console.time('dev-build-time')
   buildResult = await build(isCachingBuilds)
-  console.timeEnd('prod-build-time')
+  console.timeEnd('dev-build-time')
   await prepServer()
   await updateRoutesWithNewBuild(buildResult)
   await startServer()

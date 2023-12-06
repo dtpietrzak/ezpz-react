@@ -15,7 +15,8 @@ export const hmrRuntimePlugin = {
       const contents = fs.readFileSync("ezpz/scripts/hmr-runtime.ts", "utf8")
 
       return {
-        contents,
+        contents: process.env.NODE_ENV === 'production' ?
+          '' : contents,
         loader: "ts",
       }
     })

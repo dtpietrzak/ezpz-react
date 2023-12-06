@@ -10,35 +10,20 @@ let init = false
 // isolate everything before the routes from the rest of the app
 
 const esbuildConfig = {
-  entryPoints: env === 'production' ?
-    {
-      bundle: 'ezpz/scripts/client-script.tsx',
-      root: 'ezpz/tools/components/ProvidersForClient.tsx',
-      app: 'build/app.tsx',
-      css: 'build/app.css',
-      layouts_tool: 'ezpz/tools/components/Layouts.tsx',
-      layouts: 'build/layouts/layouts_for_csr.tsx',
-      routes: 'build/routing/routes_for_csr.tsx',
-      hmr: "ezpz/scripts/hmr-entrypoint.ts",
-      ezpz: "ezpz",
-      react: "react",
-      "react-dom": "react-dom",
-    }
-    :
-    {
-      bundle: 'ezpz/scripts/client-script.tsx',
-      root: 'ezpz/tools/components/ProvidersForClient.tsx',
-      app: 'build/app.tsx',
-      css: 'build/app.css',
-      layouts_tool: 'ezpz/tools/components/Layouts.tsx',
-      layouts: 'build/layouts/layouts_for_csr.tsx',
-      routes: 'build/routing/routes_for_csr.tsx',
-      hmr: "ezpz/scripts/hmr-entrypoint.ts",
-      ezpz: "ezpz",
-      react: "react",
-      "react-dom": "react-dom",
-      "react-refresh/runtime": "react-refresh/runtime",
-    },
+  entryPoints: {
+    bundle: 'ezpz/scripts/client-script.tsx',
+    root: 'ezpz/tools/components/ProvidersForClient.tsx',
+    app: 'build/app.tsx',
+    css: 'build/app.css',
+    layouts_tool: 'ezpz/tools/components/Layouts.tsx',
+    layouts: 'build/layouts/layouts_for_csr.tsx',
+    routes: 'build/routing/routes_for_csr.tsx',
+    hmr: "ezpz/scripts/hmr-entrypoint.ts",
+    ezpz: "ezpz",
+    react: "react",
+    "react-dom": "react-dom",
+    "react-refresh/runtime": "react-refresh/runtime",
+  },
 
   outdir: 'bundle',
 
@@ -48,7 +33,7 @@ const esbuildConfig = {
 
   bundle: true,
   splitting: true,
-  minify: false,
+  minify: process.env.NODE_ENV === 'production' ? true : false,
   sourcemap: true,
   metafile: true,
 
@@ -67,30 +52,18 @@ const esbuildConfig = {
       env === 'production' ? '"production"' : '"development"',
   },
 
-  plugins: env === 'production' ?
-    [
-      CssModulesPlugin({
-        // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
-        force: true,
-        emitDeclarationFile: true,
-        localsConvention: 'camelCaseOnly',
-        namedExports: true,
-        inject: false,
-      }),
-    ]
-    :
-    [
-      CssModulesPlugin({
-        // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
-        force: true,
-        emitDeclarationFile: true,
-        localsConvention: 'camelCaseOnly',
-        namedExports: true,
-        inject: false,
-      }),
-      hmrRuntimePlugin,
-      hmrPlugin,
-    ],
+  plugins: [
+    CssModulesPlugin({
+      // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
+      force: true,
+      emitDeclarationFile: true,
+      localsConvention: 'camelCaseOnly',
+      namedExports: true,
+      inject: false,
+    }),
+    hmrRuntimePlugin,
+    hmrPlugin,
+  ],
 } satisfies esbuild.BuildOptions
 
 export let esbuildContext: esbuild.BuildContext<typeof esbuildConfig>
@@ -131,6 +104,8 @@ export const getBundlePaths = (
   ) as any
   const css = Object.entries(build.metafile.outputs)
     .filter((x) => x[0].endsWith(".css"))[0][0]
+
+  
 
   entry = JSON.stringify("/" + entry)
   hmrEntry = JSON.stringify("/" + hmrEntry)
