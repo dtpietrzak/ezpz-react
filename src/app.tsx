@@ -5,6 +5,7 @@ import config from 'ezpz.config'
 import { ColorSchemeScript } from '@mantine/core'
 import ProvidersForServerAndClient from 'ezpz/tools/components/ProvidersForServerAndClient'
 
+
 interface AppProps {
   children: React.ReactNode
   data: Record<string, unknown>

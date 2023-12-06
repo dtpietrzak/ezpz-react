@@ -4,6 +4,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { LayoutFC } from "ezpz/types"
 import { ServerDataEntries } from "src/_types/global"
 import { IconMenu2 } from '@tabler/icons-react'
+import { notifications } from '@mantine/notifications'
 
 const MainLayout: LayoutFC = ({
   children,
@@ -22,13 +23,21 @@ const MainLayout: LayoutFC = ({
           await fetch(`/api?auth=${data?.auth}`, { cache: 'no-cache' });
         return res.json();
       },
-      updateFunction: async (data) => ((
-        await fetch(`/api`, {
+      updateFunction: async (data) => {
+        const res = await fetch(`/api`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         })
-      ).json()),
+        if (res.ok) {
+          notifications.show({
+            title: 'Saved!',
+            message: '',
+            color: 'green',
+          })
+        }
+        return res.json()
+      },
     }, {
       loadOn: 'client',
       serverSyncId: 'budget_data',

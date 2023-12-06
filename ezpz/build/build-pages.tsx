@@ -26,15 +26,21 @@ const buildPages = async (withCache: boolean = true): Promise<void> => {
         if (stats.isDirectory()) {
           readDirRecursive(filePath)
         } else {
-          if (!filePath.endsWith('.tsx')) return
-          if (filePath.includes('_helpers')) return
+          if (!(
+            filePath.endsWith('.tsx') ||
+            filePath.endsWith('.ts')
+          )) return
 
           const newFilePath_ssr = filePath.replace('./src/', './build/ssr/')
           const newFilePath_csr = filePath.replace('./src/', './build/csr/')
           const newFilePath_Dir_ssr = newFilePath_ssr.replace(file, '')
           const newFilePath_Dir_csr = newFilePath_csr.replace(file, '')
 
-          if (filePath.includes('_components')) {
+          if (
+            filePath.includes('_components') ||
+            filePath.includes('_helpers') ||
+            filePath.includes('_hooks')
+          ) {
             if (!fs.existsSync(newFilePath_Dir_ssr)) {
               fs.mkdirSync(newFilePath_Dir_ssr, { recursive: true })
             }
@@ -45,6 +51,8 @@ const buildPages = async (withCache: boolean = true): Promise<void> => {
             fs.copyFileSync(filePath, newFilePath_csr)
             return
           }
+
+          if (!filePath.endsWith('.tsx')) return
 
           if (filePath === './src/app.tsx') {
             if (!fs.existsSync(newFilePath_Dir_ssr)) {

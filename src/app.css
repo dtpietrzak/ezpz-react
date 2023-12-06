@@ -1,3 +1,58 @@
 /* @tailwind base; */
 @tailwind components;
 @tailwind utilities;
+
+.loading {
+  animation: pulsate 0.75s infinite;
+}
+ 
+@keyframes pulsate {
+  0% { 
+    opacity: 0.4;
+  }
+  50% { 
+    opacity: 0.7;
+  }
+  100% { 
+    opacity: 0.4;
+  }
+}
+
+.loaded {
+  animation: green_pulse 0.3s;
+  color: inherit;
+}
+ 
+@keyframes green_pulse {
+  0% { 
+    opacity: 0;
+    color: green;
+  }
+  80% { 
+    opacity: 1;
+    color: green;
+  }
+  100% { 
+    opacity: 0.5;
+    color: inherit;
+  }
+}
+
+/* 
+ .loading {
+  -webkit-animation: pulsate 1s ease-out;
+  -webkit-animation-iteration-count: infinite; 
+  opacity: 0.5;
+  color: orange !important;
+}
+@-webkit-keyframes loading {
+  0% { 
+      opacity: 0.1 !im;
+  }
+  50% { 
+      opacity: 1.0;
+  }
+  100% { 
+      opacity: 0.1;
+  }
+} */

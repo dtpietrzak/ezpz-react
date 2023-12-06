@@ -314,7 +314,6 @@ export const useServer = <
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const updateServerPerRequest = useCallback(async (e) => {
-    console.log('update server request: ', e.detail)
     if (serverSyncId && e.detail.serverSyncId === serverSyncId) {
       setServerState(e.detail.value)
     }
