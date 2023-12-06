@@ -1,9 +1,10 @@
-import runtime from 'react-refresh'
-
+import * as React from 'react'
 if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
-  runtime.injectIntoGlobalHook(window);
-  window.$RefreshReg$ = () => {};
-  window.$RefreshSig$ = () => type => type;
+  import('react-refresh').then(({ default: runtime }) => {
+    runtime.injectIntoGlobalHook(window);
+    window.$RefreshReg$ = () => {};
+    window.$RefreshSig$ = () => type => type;
+  })
 }
 
 import 'build/app.css'
@@ -17,7 +18,6 @@ import '@mantine/carousel/styles.css'
 import '@mantine/spotlight/styles.css'
 import '@mantine/nprogress/styles.css'
 
-import * as React from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { router } from '../../build/routing/routes_for_csr'

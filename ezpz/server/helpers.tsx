@@ -94,14 +94,14 @@ export const updateRoutesWithNewBuild = async (_buildResult) => {
   const injections = getBundlePaths(_buildResult)
   const App = (await import('build/app')).default
 
-  // ${scriptsToInject([injections.js[1]])}
+  const hmr = injections.js[1] ? `<script type="module" src=${injections.js[1]}></script>` : ''
 
   await updateRoutes(async (route, layout) => {
     return await htmlFromRoute(
       route,
       App,
       layout,
-      `<script type="module" src=${injections.js[1]}></script>
+      `${hmr}
       <script type="module">
         import * as entry from ${injections.js[0]};
         entry.run();

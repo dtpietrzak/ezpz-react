@@ -15,17 +15,19 @@ export const hmrPlugin = {
     const appDir = path.join(process.cwd(), "build")
 
     build.onLoad({ filter: /.*/, namespace: "file" }, (args) => {
-      if (process.env.NODE_ENV === 'production') return {
-        contents: '',
-        loader: args.path.endsWith("x") ? "tsx" : "ts",
-      }
-
       if (
         !args.path.match(/\.[tj]sx?$/) ||
         !fs.existsSync(args.path) ||
         !args.path.startsWith(appDir)
       ) {
         return undefined
+      }
+
+      const sourceCode = fs.readFileSync(args.path, "utf8")
+
+      if (process.env.NODE_ENV === 'production') return {
+        contents: sourceCode,
+        loader: args.path.endsWith("x") ? "tsx" : "ts",
       }
 
       const hmrId = path.relative(process.cwd(), args.path)
@@ -36,8 +38,6 @@ export const hmrPlugin = {
           `import * as __hmr__ from "hmr:runtime";`
         )
         .replace(/"\$id\$"/g, `"${hmrId.replace(/ /g, '')}"`)
-
-      const sourceCode = fs.readFileSync(args.path, "utf8")
 
       const sourceCodeWithHMR = hmrPrefix + sourceCode
 

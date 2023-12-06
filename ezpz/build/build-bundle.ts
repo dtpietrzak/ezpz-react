@@ -2,6 +2,7 @@ import * as esbuild from 'esbuild'
 import CssModulesPlugin from 'esbuild-css-modules-plugin'
 import { hmrRuntimePlugin } from './plugins/hmr-runtime-plugin'
 import { hmrPlugin } from './plugins/hmr-plugin'
+import { babelPlugin } from './plugins/babel'
 
 const env = process.env.NODE_ENV || "development"
 
@@ -9,8 +10,20 @@ let init = false
 
 // isolate everything before the routes from the rest of the app
 
-const esbuildConfig = {
-  entryPoints: {
+const entryPoints = process.env.NODE_ENV === 'production' ?
+  {
+    bundle: 'ezpz/scripts/client-script.tsx',
+    root: 'ezpz/tools/components/ProvidersForClient.tsx',
+    app: 'build/app.tsx',
+    css: 'build/app.css',
+    layouts_tool: 'ezpz/tools/components/Layouts.tsx',
+    layouts: 'build/layouts/layouts_for_csr.tsx',
+    routes: 'build/routing/routes_for_csr.tsx',
+    ezpz: "ezpz",
+    react: "react",
+    "react-dom": "react-dom",
+  } :
+  {
     bundle: 'ezpz/scripts/client-script.tsx',
     root: 'ezpz/tools/components/ProvidersForClient.tsx',
     app: 'build/app.tsx',
@@ -23,7 +36,10 @@ const esbuildConfig = {
     react: "react",
     "react-dom": "react-dom",
     "react-refresh/runtime": "react-refresh/runtime",
-  },
+  } as Record<string, string>
+
+const esbuildConfig = {
+  entryPoints: entryPoints,
 
   outdir: 'bundle',
 
@@ -52,18 +68,30 @@ const esbuildConfig = {
       env === 'production' ? '"production"' : '"development"',
   },
 
-  plugins: [
-    CssModulesPlugin({
-      // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
-      force: true,
-      emitDeclarationFile: true,
-      localsConvention: 'camelCaseOnly',
-      namedExports: true,
-      inject: false,
-    }),
-    hmrRuntimePlugin,
-    hmrPlugin,
-  ],
+  plugins: process.env.NODE_ENV === 'production' ?
+    [
+      CssModulesPlugin({
+        // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
+        force: true,
+        emitDeclarationFile: true,
+        localsConvention: 'camelCaseOnly',
+        namedExports: true,
+        inject: false,
+      }),
+      babelPlugin,
+    ] :
+    [
+      CssModulesPlugin({
+        // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
+        force: true,
+        emitDeclarationFile: true,
+        localsConvention: 'camelCaseOnly',
+        namedExports: true,
+        inject: false,
+      }),
+      hmrRuntimePlugin,
+      hmrPlugin,
+    ],
 } satisfies esbuild.BuildOptions
 
 export let esbuildContext: esbuild.BuildContext<typeof esbuildConfig>
@@ -90,29 +118,29 @@ export const buildBundle = async () => {
 export const getBundlePaths = (
   build: esbuild.BuildResult,
 ): {
-  js: string[]
+  js: (string | undefined)[]
   css: string
 } => {
   if (!build?.metafile)
     throw new Error("esbuildContext.metafile is undefined")
 
-  let [entry] = Object.entries(build.metafile.outputs).find(
+  let hmr: string | undefined
+
+  const entry = JSON.stringify("/" + Object.entries(build.metafile.outputs).find(
     ([_, output]) => output.inputs["ezpz/scripts/client-script.tsx"]
-  ) as any
-  let [hmrEntry] = Object.entries(build.metafile.outputs).find(
-    ([_, output]) => output.inputs["ezpz/scripts/hmr-entrypoint.ts"]
-  ) as any
+  )?.[0])
   const css = Object.entries(build.metafile.outputs)
-    .filter((x) => x[0].endsWith(".css"))[0][0]
+    .filter((x) => x[0].endsWith(".css"))?.[0]?.[0]
 
-  
-
-  entry = JSON.stringify("/" + entry)
-  hmrEntry = JSON.stringify("/" + hmrEntry)
+  if (process.env.NODE_ENV === 'development') {
+    hmr = JSON.stringify("/" + Object.entries(build.metafile.outputs).find(
+      ([_, output]) => output.inputs["ezpz/scripts/hmr-entrypoint.ts"]
+    )?.[0])
+  }
 
   return {
-    js: [entry, hmrEntry],
-    css: `/${css}`,
+    js: [entry, hmr],
+    css: css && `/${css}`,
   }
 }
 

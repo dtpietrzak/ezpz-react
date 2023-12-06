@@ -1,4 +1,4 @@
-process.env.NODE_ENV = 'development'
+process.env.NODE_ENV = 'production'
 process.env.isServer = 'true'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
