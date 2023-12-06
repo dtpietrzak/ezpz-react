@@ -4,3 +4,5 @@
 /bundle/
 .git
 /prod_build/
+
+auth.ts

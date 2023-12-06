@@ -2,9 +2,9 @@ import { Router, Request, Response } from 'express'
 import { LoadStatus } from 'ezpz/types'
 import { Budget, ServerData, ServerDataEntries } from 'src/_types/global'
 import fs from 'fs'
+import { authString } from '../../auth'
 
 export const port = 3000
-const authString = 'ilovemyfamily!'
 
 const newBudget = (id: string, startingBalance: number): Budget => ({
   month: {
