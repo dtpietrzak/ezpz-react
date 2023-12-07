@@ -14,6 +14,7 @@ import { updateStartingBalance, updateTransaction } from './_helpers/updates'
 import { amountToDollars, formattedMonth, monthNumberToMonthWord } from './_helpers/conversions'
 import { addTransaction } from './_helpers/additions'
 import { deleteTransaction } from './_helpers/deletes'
+import { BurnDownChart } from './_components/BurnDownChart'
 
 export const config: PageConfig = {
   title: 'Home',
@@ -47,8 +48,27 @@ const Home: PageFC = () => {
             })
 
             const weeklyTotalSpent = transactionsThisWeek.reduce((acc, cur) => acc + cur.amount, 0)
-            const daysBurnedPercent = getDate(new Date()) / getDaysInMonth(new Date()) * 100
-            const dollarsBurnedPercent = spent / month.startingBalance * 100
+
+            const arrayOfDaysThisMonthSoFar = Array.from(
+              { length: getDaysInMonth(new Date()) },
+              (_, i) => (i + 1),
+            ).filter((day) => day <= getDate(new Date()))
+
+            // this needs to be accumulated
+            const totalTransactionAmountPerDaysThisMonthSoFar = arrayOfDaysThisMonthSoFar.map((day) => {
+              const transactionsThisDay = transactions.filter((transaction) => {
+                return getDate(new Date(transaction.date)) === day
+              })
+              return (
+                transactionsThisDay.reduce((acc, cur) => acc + cur.amount, 0)
+              )
+            }).map((amount, i, arr) => {
+              return arr.slice(0, i + 1).reduce((acc, cur) => acc + cur, 0)
+            }).map((amount) => ((value.month.startingBalance - amount) / 100))
+
+            const numberOfDaysThisMonth = getDaysInMonth(new Date(month.id))
+
+            console.log(totalTransactionAmountPerDaysThisMonthSoFar)
 
             return (
               <Accordion.Item
@@ -81,25 +101,11 @@ const Home: PageFC = () => {
                       }}
                     />
                   </div>
-                  <Progress.Root size="xl">
-                    <Progress.Section
-                      value={daysBurnedPercent}
-                      color="cyan"
-                    >
-                      <Progress.Label>Days</Progress.Label>
-                    </Progress.Section>
-                  </Progress.Root>
-                  <Progress.Root size="xl">
-                    <Progress.Section
-                      value={dollarsBurnedPercent}
-                      color={
-                        daysBurnedPercent < dollarsBurnedPercent ?
-                          'red' : 'green'
-                      }
-                    >
-                      <Progress.Label>Dollars</Progress.Label>
-                    </Progress.Section>
-                  </Progress.Root>
+                  <BurnDownChart
+                    data={totalTransactionAmountPerDaysThisMonthSoFar}
+                    numOfTicks={numberOfDaysThisMonth}
+                    totalAmount={month.startingBalance / 100}
+                  />
                   <div className='flex w-full justify-between mt-2'>
                     <Text size='sm' fw={500} mb='lg' c='dimmed'
                       className='flex-auto'
