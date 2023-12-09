@@ -71,19 +71,37 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
       (_, i) => (i + 1),
     ).map((i) => i.toString())
 
+    let acc: number = 0
+    const remainingForEachDaySoFar = data.map((amount, i) => {
+      acc += amount
+      const remaining = totalAmount - acc
+      return remaining
+    })
+
     const perTickAverage = (1 / numOfTicks) * totalAmount
     const burnDownGoalArray = Array.from(
       { length: numOfTicks },
       (_, i) => (i + 1),
     ).map((i) => (totalAmount - (perTickAverage * i)))
 
-    // this should be the line of best fit for the tempData but extend until it hits or passes 0 or the end of the chart
-    const burnDownVelocitySlope = (data[0] - data[data.length - 1]) / data.length
+    const burnDownVelocitySlope = data.reduce((acc, cur) => {
+      return acc + cur
+    }) / data.length
+
+    console.log('slope', burnDownVelocitySlope)
+
     const burnDownVelocity = Array.from(
       { length: numOfTicks },
       (_, i) => (i - 1),
-    ).map((i) => (data[0] - (burnDownVelocitySlope * (i + 1))))
+    ).map((i) => (burnDownGoalArray[0] - (burnDownVelocitySlope * (i + 1))))
 
+    console.table({
+      labels,
+      burnDownGoalArray,
+      burnDownVelocity,
+      remainingForEachDaySoFar,
+      transactions: data,
+    })
 
     setChartData({
       labels,
@@ -107,7 +125,7 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
         },
         {
           label: 'Actual',
-          data: data,
+          data: remainingForEachDaySoFar,
           borderColor: 'green',
           tension: 0.1,
           pointRadius: 0,

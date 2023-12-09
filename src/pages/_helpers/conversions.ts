@@ -40,3 +40,14 @@ export const monthNumberToMonthWord = (monthNumber: string) => {
 export const formattedMonth = (month: number): string => {
   return month < 9 ? `0${month + 1}` : `${month + 1}`
 }
+
+export const monthIdToDate = (monthId: string): Date => {
+  const year = parseInt(monthId.slice(0, 4))
+  const month = parseInt(monthId.slice(5, 7)) - 1
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  date.setFullYear(year)
+  date.setMonth(month)
+  date.setDate(1)
+  return date
+}

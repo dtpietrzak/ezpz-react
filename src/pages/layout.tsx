@@ -70,7 +70,7 @@ const MainLayout: LayoutFC = ({
   }).filter(Boolean)
 
   return (
-    <div className={cm('w-full h-[calc(100dvh)] bg-zinc-200 overflow-hidden')}>
+    <div className={cm('w-full h-[calc(100dvh)] bg-zinc-200')}>
       <div className={cm('w-full h-12 bg-zinc-700 flex justify-between items-center px-4')}>
         <div className={cm('text-white flex items-center h-12 text-2xl font-bold align-middle font-mono')}>
           ez spend

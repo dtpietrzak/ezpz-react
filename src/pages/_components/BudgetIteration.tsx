@@ -11,6 +11,7 @@ import { Title } from './BudgetIteration/Title';
 import Remaining from './BudgetIteration/Remaining';
 import ThisWeekAnnually from './BudgetIteration/ThisWeekAnnually';
 import AddTransaction from './BudgetIteration/AddTransaction';
+import { monthIdToDate } from '../_helpers/conversions';
 
 type BudgetIterationProps = {
   newAmount: string
@@ -60,19 +61,16 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
     (_, i) => (i + 1),
   ).filter((day) => day <= getDate(new Date()))
 
-  // this needs to be accumulated
   const totalTransactionAmountPerDaysThisMonthSoFar = arrayOfDaysThisMonthSoFar.map((day) => {
     const transactionsThisDay = transactions.filter((transaction) => {
       return getDate(new Date(transaction.date)) === day
     })
     return (
-      transactionsThisDay.reduce((acc, cur) => acc + cur.amount, 0)
+      transactionsThisDay.reduce((acc, cur) => acc + cur.amount, 0) / 100
     )
-  }).map((amount, i, arr) => {
-    return arr.slice(0, i + 1).reduce((acc, cur) => acc + cur, 0)
-  }).map((amount) => ((iteration.startingBalance - amount) / 100))
+  })
 
-  const numberOfDaysThisMonth = getDaysInMonth(new Date(iteration.id))
+  const numberOfDaysThisMonth = getDaysInMonth(monthIdToDate(iteration.id))
 
   return (
     <Accordion.Item value={iteration.id}>
