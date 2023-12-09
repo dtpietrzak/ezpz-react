@@ -65,7 +65,6 @@ export function createHotContext(id: string): ImportMetaHot {
 
   const hot = {
     accept: (cb) => {
-      console.log('here0', id)
       if (disposed) {
         throw new Error("import.meta.hot.accept() called after dispose()")
       }

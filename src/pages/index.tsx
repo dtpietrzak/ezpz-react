@@ -3,15 +3,17 @@ import {
   useServerSync,
   useState,
   useEffect,
+  LoadHandler,
 } from 'ezpz'
 import { PageConfig, PageFC } from 'ezpz/types'
-import { Accordion } from '@mantine/core'
+import { Accordion, Skeleton, Text } from '@mantine/core'
 import { Budget, ServerDataEntries, ServerDataEntry, Transaction } from 'src/_types/global'
-import { formattedMonth } from './_helpers/conversions'
 import BudgetIteration from './_components/BudgetIteration'
 import { updateStartingBalance, updateTransaction } from './_helpers/updates'
 import { addTransaction } from './_helpers/additions'
 import { deleteTransaction } from './_helpers/deletes'
+import { isValidAmount } from './_helpers/guards'
+import { formattedMonth } from './_helpers/conversions'
 
 export const config: PageConfig = {
   title: 'Home',
@@ -25,93 +27,87 @@ const Home: PageFC = () => {
 
   const [newAmount, setNewAmount] = useState<string>('')
 
-  const [migrationComplete, setMigrationComplete] = useState<boolean>(false)
-  // migration
-  useEffect(() => {
-    console.log('data: ', data)
-    console.log('migrationComplete: ', migrationComplete)
-    if (!data || data?.length === 0 || migrationComplete) return
-    const newData = data.map(([monthId, value]) => {
-      if (!value.iteration?.type) {
-        const budget = {
-          ...value,
-          iteration: {
-            // @ts-ignore
-            ...value.month,
-            type: 'monthly',
-          },
-        }
-        // @ts-ignore
-        delete budget?.month
-        return [monthId, budget] satisfies ServerDataEntry
-      } else {
-        // @ts-ignore
-        delete value?.month
-        return [monthId, value] satisfies ServerDataEntry
-      }
-    })
-    setServerData(newData)
-    setMigrationComplete(true)
-  }, [data, migrationComplete])
+  const [value, setValue] = useState<string | null>(null)
 
-  // @ts-ignore
-  if (data?.[0]?.month) return null
+  useEffect(() => {
+    if (data.length === 0) return
+    setValue(data?.[0]?.[0] || getCurrentMonth())
+  }, [data])
 
   return (
     <Page config={config} id='page_comp'>
-      <Accordion defaultValue={getCurrentMonth()}>
-        {
-          // data.map(([monthId, value]) => (
-          //   <BudgetIteration
-          //     key={monthId}
-          //     newAmount={newAmount}
-          //     iteration={value.iteration}
-          //     transactions={value.transactions}
-          //     statusOfData={statusOfData}
-
-          //     onAddNewTransaction={() => {
-          //       setServerData(
-          //         addTransaction(
-          //           data, monthId, newAmount,
-          //         ) as ServerDataEntries
-          //       ).then(() => setNewAmount(''))
-          //     }}
-          //     onUpdateNewAmount={(newAmount) => setNewAmount(newAmount)}
-          //     onUpdateBudgetTotal={(newTotal) => {
-          //       setServerData((prev) => {
-          //         return updateStartingBalance(prev, monthId, newTotal)
-          //       })
-          //     }}
-          //     onUpdateTransaction={(
-          //       transactionId, newVal, key,
-          //     ) => {
-          //       setServerData(
-          //         updateTransaction({
-          //           _entries: data,
-          //           _monthId: monthId,
-          //           _transactionId: transactionId,
-          //           _keyToUpdate: key,
-          //           _newVal: newVal,
-          //         }) as ServerDataEntries
-          //       )
-          //     }}
-          //     onDeleteTransaction={(transactionId) => {
-          //       setServerData(
-          //         deleteTransaction({
-          //           _entries: data,
-          //           _monthId: monthId,
-          //           _transactionId: transactionId,
-          //         }) as ServerDataEntries
-          //       )
-          //     }}
-          //   />
-          // ))
+      <LoadHandler
+        status={statusOfData}
+        loading={
+          <Accordion defaultValue={'loading'}>
+            <Accordion.Item value={'loading'}>
+              <Accordion.Control h={50}>
+                <Skeleton height={10} w={200} radius="xl" />
+              </Accordion.Control>
+              <Accordion.Panel>
+                <Skeleton height={10} w={200} radius="xl" mt={30} />
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
         }
-      </Accordion>
+        success={
+          <Accordion value={value} onChange={setValue}>
+            {
+              data.map(([id, value]) => (
+                <BudgetIteration
+                  key={id}
+                  newAmount={newAmount}
+                  iteration={value.iteration}
+                  transactions={value.transactions}
+                  statusOfData={statusOfData}
+
+                  onAddNewTransaction={() => {
+                    if (!isValidAmount(newAmount)) return
+                    setServerData(
+                      addTransaction(
+                        data, id, newAmount,
+                      ) as ServerDataEntries
+                    ).then(() => setNewAmount(''))
+                  }}
+                  onUpdateNewAmount={(newAmount) => setNewAmount(newAmount)}
+                  onUpdateBudgetTotal={(newTotal) => {
+                    if (!isValidAmount(newTotal)) return
+                    setServerData((prev) => {
+                      return updateStartingBalance(prev, id, newTotal)
+                    })
+                  }}
+                  onUpdateTransaction={(
+                    transactionId, newVal, key,
+                  ) => {
+                    if (key === 'amount' && !isValidAmount(newVal)) return
+                    setServerData(
+                      updateTransaction({
+                        _entries: data,
+                        _id: id,
+                        _transactionId: transactionId,
+                        _keyToUpdate: key,
+                        _newVal: newVal,
+                      }) as ServerDataEntries
+                    )
+                  }}
+                  onDeleteTransaction={(transactionId) => {
+                    setServerData(
+                      deleteTransaction({
+                        _entries: data,
+                        _id: id,
+                        _transactionId: transactionId,
+                      }) as ServerDataEntries
+                    )
+                  }}
+                />
+              ))
+            }
+          </Accordion>
+        }
+      />
     </Page>
   )
 }
-
 
 const getCurrentMonth = (): string => {
   const date = new Date()

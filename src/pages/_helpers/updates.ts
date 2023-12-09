@@ -13,8 +13,8 @@ export const updateStartingBalance = (
         key,
         {
           ...value,
-          month: {
-            ...value.month,
+          iteration: {
+            ...value.iteration,
             startingBalance: dollarsToAmount(_newVal),
           },
         },
@@ -26,7 +26,7 @@ export const updateStartingBalance = (
 
 type UpdateTransactionProps = {
   _entries: ServerDataEntries
-  _monthId: string
+  _id: string
   _transactionId: string
   _keyToUpdate: keyof Transaction
   _newVal: string | number
@@ -34,13 +34,13 @@ type UpdateTransactionProps = {
 
 export const updateTransaction = ({
   _entries,
-  _monthId,
+  _id,
   _transactionId,
   _keyToUpdate,
   _newVal,
 }: UpdateTransactionProps) => {
   return _entries.map(([key, value]) => {
-    if (key === _monthId) {
+    if (key === _id) {
 
       for (let i = 0; i < value.transactions.length; i++) {
         if (value.transactions[i].id === _transactionId) {

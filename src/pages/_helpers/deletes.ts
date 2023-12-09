@@ -2,17 +2,17 @@ import { ServerDataEntries } from "src/_types/global"
 
 type DeleteTransactionProps = {
   _entries: ServerDataEntries
-  _monthId: string
+  _id: string
   _transactionId: string
 }
 
 export const deleteTransaction = ({
   _entries,
-  _monthId,
+  _id,
   _transactionId,
 }: DeleteTransactionProps) => {
   return _entries.map(([key, value]) => {
-    if (key === _monthId) {
+    if (key === _id) {
 
       for (let i = 0; i < value.transactions.length; i++) {
         if (value.transactions[i].id === _transactionId) {

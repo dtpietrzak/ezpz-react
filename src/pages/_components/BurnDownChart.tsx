@@ -89,36 +89,36 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
       labels,
       datasets: [
         {
-          label: 'Actual',
-          data: data,
-          borderColor: 'rgb(200, 65, 50)',
-          tension: 0.1,
-          pointRadius: 0,
-          borderWidth: 2,
-        },
-        {
           label: 'Velocity',
           data: burnDownVelocity,
-          borderColor: 'rgb(100, 200, 50)',
+          borderColor: 'grey',
           tension: 0.1,
           pointRadius: 0,
-          borderWidth: 2,
+          borderWidth: 1,
         },
         {
           label: 'Goal',
           data: burnDownGoalArray,
-          borderColor: 'rgb(190, 190, 190)',
+          borderColor: 'grey',
           tension: 0.1,
           pointRadius: 0,
           borderWidth: 2,
-
+          borderDash: [5, 5],
+        },
+        {
+          label: 'Actual',
+          data: data,
+          borderColor: 'green',
+          tension: 0.1,
+          pointRadius: 0,
+          borderWidth: 4,
         },
       ],
     })
   }, [data, numOfTicks, totalAmount])
 
   return (
-    <Paper shadow="xs" bg='rgb(220,220,220)'>
+    <Paper shadow="xs" bg='rgb(220,220,220)' mah={200}>
       <Line
         options={options}
         data={chartData}

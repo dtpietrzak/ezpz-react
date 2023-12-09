@@ -1,14 +1,16 @@
 import * as React from 'react';
 
 import { getDate, getDaysInMonth, getWeek } from 'date-fns';
-import { FC, useState } from 'ezpz';
+import { FC } from 'ezpz';
 import { Iteration, Transaction } from 'src/_types/global';
-import { Accordion, Button, ScrollArea, Text, TextInput } from '@mantine/core';
-import { amountToDollars, monthNumberToMonthWord } from '../_helpers/conversions';
-import EditText from './EditText';
+import { Accordion, Progress, ScrollArea } from '@mantine/core';
 import { LoadStatus } from 'ezpz/types';
 import { BurnDownChart } from './BurnDownChart';
 import { TransactionItem } from './Transaction';
+import { Title } from './BudgetIteration/Title';
+import Remaining from './BudgetIteration/Remaining';
+import ThisWeekAnnually from './BudgetIteration/ThisWeekAnnually';
+import AddTransaction from './BudgetIteration/AddTransaction';
 
 type BudgetIterationProps = {
   newAmount: string
@@ -41,6 +43,8 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
   const spent = transactions.reduce((acc, cur) => acc + cur.amount, 0)
   const remainingBalance = iteration.startingBalance - spent
 
+  const dollarsBurnedPercent = (spent / iteration.startingBalance) * 100
+
   const yearlyTotalSpendable = iteration.startingBalance * 12
   const weeklyTotalSpendable = yearlyTotalSpendable / 52
   const transactionsThisWeek = transactions.filter((transaction) => {
@@ -71,61 +75,66 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
   const numberOfDaysThisMonth = getDaysInMonth(new Date(iteration.id))
 
   return (
-    <Accordion.Item
-      key={iteration.id}
-      value={iteration.id}
-    >
-      <Accordion.Control>
-        <Text
-          size='xl'
-          fw={700}
-        >
-          {monthNumberToMonthWord(iteration.id.slice(5, 7))} - {iteration.id.slice(0, 4)}
-        </Text>
-      </Accordion.Control>
+    <Accordion.Item value={iteration.id}>
+      <Title
+        iterationId={iteration.id}
+        iterationType={iteration.type}
+      />
       <Accordion.Panel className='max-h-60vh'>
-        <div className='flex w-full justify-between -mb-4'>
-          <Text size='xl' fw={500} mb='lg'
-            className='flex-auto'
-          >
-            Remaining: ${amountToDollars(remainingBalance)}
-          </Text>
-          <EditText size='xl' fw={500} mb='lg' c='dimmed'
-            loadStatus={statusOfData}
-            prefix={`/ `}
-            value={amountToDollars(iteration.startingBalance)}
-            onSave={(newVal) => onUpdateBudgetTotal(newVal)}
-          />
-        </div>
-        <BurnDownChart
-          data={totalTransactionAmountPerDaysThisMonthSoFar}
-          numOfTicks={numberOfDaysThisMonth}
-          totalAmount={iteration.startingBalance / 100}
+        <Remaining
+          remainingBalance={remainingBalance}
+          startingBalance={iteration.startingBalance}
+          statusOfData={statusOfData}
+
+          onUpdateBudgetTotal={onUpdateBudgetTotal}
         />
-        <div className='flex w-full justify-between mt-2'>
-          <Text size='sm' fw={500} mb='lg' c='dimmed'
-            className='flex-auto'
-          >
-            This Week Annually: ${amountToDollars(weeklyTotalSpendable - weeklyTotalSpent)} / ${amountToDollars(weeklyTotalSpendable)}
-          </Text>
-        </div>
-        <div className='flex items-center'>
-          <div className='w-12 mr-1'>New:</div>
-          <TextInput
-            className='flex-auto'
-            type='number'
-            leftSection='$'
-            size='md'
-            value={newAmount}
-            onChange={(e) => onUpdateNewAmount(e.target.value)}
-          />
-          <Button
-            className='ml-2'
-            onClick={() => onAddNewTransaction()}
-          >
-            Add
-          </Button>
-        </div>
+        {
+          iteration.type === 'month' &&
+          <>
+            <BurnDownChart
+              data={totalTransactionAmountPerDaysThisMonthSoFar}
+              numOfTicks={numberOfDaysThisMonth}
+              totalAmount={iteration.startingBalance / 100}
+            />
+            <ThisWeekAnnually
+              weeklyTotalSpent={weeklyTotalSpent}
+              weeklyTotalSpendable={weeklyTotalSpendable}
+            />
+          </>
+        }
+        {
+          iteration.type === 'unique' &&
+          <>
+            <Progress.Root size="xl">
+              <Progress.Section
+                value={dollarsBurnedPercent}
+                color={dollarsBurnedPercent < 100 ? 'black' : 'red'}
+              >
+                <Progress.Label>
+                  {dollarsBurnedPercent.toFixed(0)}% - {
+                    dollarsBurnedPercent < 100 ?
+                      'Spent' : 'Over Spent'
+                  }
+                </Progress.Label>
+              </Progress.Section>
+              {
+                dollarsBurnedPercent < 100 &&
+                <Progress.Section
+                  value={100 - dollarsBurnedPercent}
+                  color='green'
+                >
+                  <Progress.Label>Remaining</Progress.Label>
+                </Progress.Section>
+              }
+            </Progress.Root>
+          </>
+        }
+        <AddTransaction
+          newAmount={newAmount}
+
+          onAddNewTransaction={onAddNewTransaction}
+          onUpdateNewAmount={onUpdateNewAmount}
+        />
         <ScrollArea h={240} mt={16} type="never">
           {
             transactions.sort((a, b) => (b.date - a.date)).map((transaction) => (

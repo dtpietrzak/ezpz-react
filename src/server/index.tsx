@@ -3,12 +3,14 @@ import { LoadStatus } from 'ezpz/types'
 import { Budget, ServerData, ServerDataEntries } from 'src/_types/global'
 import fs from 'fs'
 import { authString } from '../../auth'
+import { z } from 'zod'
 
 export const port = 3000
 
 const newBudget = (id: string, startingBalance: number): Budget => ({
-  month: {
+  iteration: {
     id: id,
+    type: 'month',
     startingBalance: startingBalance,
   },
   transactions: [],
@@ -37,12 +39,34 @@ const getLastMonth = (): string => {
   return `${year}-${formattedMonth(month)}`;
 }
 
-
-const dataFile: ServerData = JSON.parse(
-  fs.readFileSync('data/data.json', 'utf8'),
+const z_ServerDataEntries = z.array(
+  z.tuple([z.string(), z.object({
+    iteration: z.object({
+      id: z.string(),
+      type: z.union([z.literal('month'), z.literal('unique')]),
+      startingBalance: z.number(),
+    }),
+    transactions: z.array(
+      z.object({
+        id: z.string(),
+        amount: z.number(),
+        description: z.string(),
+        date: z.string(),
+      })
+    ),
+  })])
 )
 
-let data: ServerData = new Map(dataFile)
+let dataFile: ServerData | undefined = undefined
+if (fs.existsSync('data/data.json')) {
+  dataFile = JSON.parse(
+    fs.readFileSync('data/data.json', 'utf8'),
+  )
+} else {
+  fs.mkdirSync('data')
+  fs.writeFileSync('data/data.json', JSON.stringify([]))
+}
+let data: ServerData = new Map(dataFile ?? [])
 
 export const serverRoutes = async (router: Router) => {
 
@@ -70,7 +94,7 @@ export const serverRoutes = async (router: Router) => {
         currentMonth,
         newBudget(
           currentMonth,
-          data.get(getLastMonth())?.month.startingBalance || 0,
+          data.get(getLastMonth())?.iteration.startingBalance || 0,
         )
       )
     }
@@ -82,6 +106,15 @@ export const serverRoutes = async (router: Router) => {
   })
 
   router.post('/api', async (req: Request, res: Response) => {
+    if (req.body === undefined) {
+      res.send({
+        data: [],
+        status: 'error' as LoadStatus,
+        error: 'No data sent: C01',
+      })
+      return
+    }
+
     let isAuthed = false
     if (req?.query?.auth === authString) isAuthed = true
     if (req.cookies?.auth === authString) isAuthed = true
@@ -90,12 +123,33 @@ export const serverRoutes = async (router: Router) => {
       res.send({
         data: [],
         status: 'error' as LoadStatus,
-        error: 'Not authorized',
+        error: 'Not authorized: A01',
       })
       return
     }
 
     const dataEntries = req.body as ServerDataEntries
+
+    if (dataEntries.length === 0) {
+      res.send({
+        data: [],
+        status: 'error' as LoadStatus,
+        error: 'No data sent: C02',
+      })
+      return
+    }
+
+    // TODO: validate data
+    // const validatedDataEntries = z_ServerDataEntries.safeParse(dataEntries)
+
+    // if (!validatedDataEntries.success) {
+    //   res.send({
+    //     data: [],
+    //     status: 'error' as LoadStatus,
+    //     error: 'Invalid data sent: C03',
+    //   })
+    //   return
+    // }
 
     data = new Map(dataEntries)
     fs.writeFileSync(
