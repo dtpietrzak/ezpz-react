@@ -4,7 +4,7 @@ import EditText from './EditText'
 import { amountToDollars } from '../_helpers/conversions'
 import { Transaction } from 'src/_types/global'
 import { LoadStatus } from 'ezpz/types'
-import { ActionIcon, Text, Transition, Popover, ButtonGroup, Button } from '@mantine/core'
+import { ActionIcon, Text, Transition, Popover, Button } from '@mantine/core'
 import { IconX } from '@tabler/icons-react'
 
 

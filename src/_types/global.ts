@@ -1,13 +1,15 @@
 export type ServerData = Map<string, Budget>
-export type ServerDataEntries = [string, Budget][]
+export type ServerDataEntries = ServerDataEntry[]
+export type ServerDataEntry = [id: string, budget: Budget]
 
 export type Budget = {
-  month: Month,
+  iteration: Iteration,
   transactions: Transaction[],
 }
 
-export type Month = {
-  id: string
+export type Iteration = {
+  id: string // type=month: YYYY-MM, type=unique: string
+  type: 'month' | 'unique'
   startingBalance: number
 }
 

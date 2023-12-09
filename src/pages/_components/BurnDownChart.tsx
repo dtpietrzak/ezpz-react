@@ -9,7 +9,6 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartData,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { Paper } from '@mantine/core'
@@ -54,9 +53,7 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
           max: totalAmount,
           display: false,
         },
-        x: {
-          display: false,
-        }
+        x: { display: false }
       },
       aspectRatio: 3.5,
       plugins: {
