@@ -88,20 +88,10 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
       return acc + cur
     }) / data.length
 
-    console.log('slope', burnDownVelocitySlope)
-
     const burnDownVelocity = Array.from(
       { length: numOfTicks },
       (_, i) => (i - 1),
     ).map((i) => (burnDownGoalArray[0] - (burnDownVelocitySlope * (i + 1))))
-
-    console.table({
-      labels,
-      burnDownGoalArray,
-      burnDownVelocity,
-      remainingForEachDaySoFar,
-      transactions: data,
-    })
 
     setChartData({
       labels,
