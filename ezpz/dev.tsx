@@ -107,8 +107,6 @@ export const watcher = chokidar.watch('src/', {
 
     console.timeEnd('dev-build-time')
 
-    console.log('message: ', JSON.parse(message))
-
     const clients = ws.getWss().clients;
     console.log('clients.size: ', clients.size)
     if (clients.size > 0) {

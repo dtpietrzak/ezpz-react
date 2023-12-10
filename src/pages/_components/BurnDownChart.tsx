@@ -55,7 +55,6 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
         },
         x: { display: false }
       },
-      aspectRatio: 3.5,
       plugins: {
         legend: {
           display: false,
@@ -126,7 +125,7 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
   }, [data, numOfTicks, totalAmount])
 
   return (
-    <Paper shadow="xs" bg='rgb(220,220,220)' mah={200}>
+    <Paper shadow="xs" bg='rgb(220,220,220)' mah={100}>
       <Line
         options={options}
         data={chartData}

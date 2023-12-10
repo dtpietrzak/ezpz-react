@@ -41,11 +41,27 @@ const Home: PageFC = () => {
         first_load={
           <Accordion defaultValue={'loading'}>
             <Accordion.Item value={'loading'}>
-              <Accordion.Control h={50}>
-                <Skeleton height={10} w={200} radius="xl" />
+              <Accordion.Control h={57}>
+                <Skeleton height={20} w={180} radius="xl" />
               </Accordion.Control>
               <Accordion.Panel>
-                <Skeleton height={10} w={200} radius="xl" mt={30} />
+                <div className='flex flex-row justify-between'>
+                  <Skeleton height={20} w={180} radius="xl" mt={6} />
+                  <Skeleton height={20} w={70} radius="xl" mt={6} />
+                </div>
+                <Skeleton height={100} radius="xl" mt={6} />
+                <Skeleton height={16} w={240} radius="xl" mt={10} />
+                <div className='flex flex-row justify-between'>
+                  <Skeleton height={16} w={50} radius="xl" mt={34}
+                    className='mr-2'
+                  />
+                  <Skeleton height={40} radius="xl" mt={20}
+                    className='flex flex-grow'
+                  />
+                  <Skeleton height={36} w={96} radius="xl" mt={22}
+                    className='ml-2'
+                  />
+                </div>
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
