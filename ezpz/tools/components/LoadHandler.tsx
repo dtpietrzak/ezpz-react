@@ -4,6 +4,7 @@ import { LoadStatus } from 'ezpz/types'
 interface LoadHandlerProps extends HTMLProps<HTMLDivElement> {
   status: LoadStatus
   first_load: JSX.Element
+  local_load?: JSX.Element
   loading?: JSX.Element
   success: JSX.Element
   error?: JSX.Element
@@ -12,6 +13,7 @@ interface LoadHandlerProps extends HTMLProps<HTMLDivElement> {
 export const LoadHandler: FC<LoadHandlerProps> = ({
   status,
   first_load,
+  local_load,
   loading,
   success,
   error,
@@ -22,10 +24,11 @@ export const LoadHandler: FC<LoadHandlerProps> = ({
       <Suspense fallback={first_load}>
         {
           status === 'first_load' ? first_load
-            : status === 'loading' ? loading ? loading : success
-              : status === 'success' ? success
-                : status === 'error' ? error ? error : success
-                  : null
+            : status === 'local_load' ? local_load ? local_load : success
+              : status === 'loading' ? loading ? loading : success
+                : status === 'success' ? success
+                  : status === 'error' ? error ? error : success
+                    : null
         }
       </Suspense>
     </div>

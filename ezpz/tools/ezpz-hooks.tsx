@@ -1,6 +1,6 @@
 import { ErrorMessage, LoadStatus, UseServerOptions, ServerFunctions, UseServerReturn, UseServerSyncOptions, JSONable, JSONableObject } from 'ezpz/types'
 import { useContext } from 'react'
-import { isClient, isServer } from './ezpz-utils'
+import { fromLocalStorage, isClient, isServer, toLocalStorage } from './ezpz-utils'
 import { useState, useEffect, useCallback, useRef } from './react-wrappers'
 import { nprogress } from '@mantine/nprogress'
 import { useLocation } from './react-router-dom-wrappers'
@@ -213,6 +213,23 @@ export const useServer = <
   }, [serverSyncId])
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (serverSyncId && init && typeof init[serverSyncId] === 'undefined') {
+      init[serverSyncId] = fromLocalStorage(serverSyncId)
+        .then((data) => {
+          if (data) {
+            setStatus('local_load')
+            setLocalState(JSON.parse(data as string) as T)
+          }
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSyncId])
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const syncLoadFunctionStatus = useCallback((e) => {
     if (e.detail.serverSyncId === serverSyncId) {
       // just send it!
@@ -238,6 +255,11 @@ export const useServer = <
               loadFunctionStateUpdateTrigger(
                 data,
                 serverSyncId,
+              )
+              toLocalStorage(
+                serverSyncId, JSON.stringify(
+                  data ?? initialState
+                )
               )
             }
             setLocalState(data ?? initialState)

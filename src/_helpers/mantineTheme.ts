@@ -1,4 +1,4 @@
-import { MantineTheme, Progress, Accordion, Skeleton } from '@mantine/core';
+import { MantineTheme, Progress, Accordion } from '@mantine/core';
 
 // mantine theme object
 export const theme: Partial<MantineTheme> = {
@@ -13,18 +13,10 @@ export const theme: Partial<MantineTheme> = {
         },
       }
     }),
-    Skeleton: Skeleton.extend({
-      styles: {
-        root: {
-          border: '1px solid rgb(200,200,200)',
-          borderRadius: '0.5rem',
-          marginBottom: '0.25rem',
-        },
-      }
-    }),
     Accordion: Accordion.extend({
       classNames: {
-        // root: 'bg-red-800',
+        item: 'border border-solid border-zinc-300 bg-zinc-100 rounded-lg -mb-2 border-b-0',
+        control: 'flex justify-between w-full h-14 px-4 py-2 rounded-lg cursor-pointer',
       }
     })
   }

@@ -26,6 +26,7 @@ const Remaining: FC<RemainingProps> = ({
     <div className='flex w-full justify-between -mb-4'>
       <Text size='xl' fw={500} mb='lg'
         className='flex-auto'
+        c={remainingBalance < 0 ? 'red' : 'blue'}
       >
         Remaining: ${amountToDollars(remainingBalance)}
       </Text>

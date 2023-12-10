@@ -11,7 +11,7 @@ export type PageConfig = {
 
 export type ErrorMessage = string
 
-export type LoadStatus = 'first_load' | 'loading' | 'success' | 'error'
+export type LoadStatus = 'first_load' | 'local_load' | 'loading' | 'success' | 'error'
 
 export type ServerResponse<T extends JSONable | unknown = unknown> = {
   data?: T,

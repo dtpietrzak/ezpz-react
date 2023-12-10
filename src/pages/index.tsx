@@ -5,7 +5,7 @@ import {
   useEffect,
   LoadHandler,
 } from 'ezpz'
-import { PageConfig, PageFC } from 'ezpz/types'
+import { LoadStatus, PageConfig, PageFC } from 'ezpz/types'
 import { Accordion, Skeleton, Text } from '@mantine/core'
 import { Budget, ServerDataEntries, ServerDataEntry, Transaction } from 'src/_types/global'
 import BudgetIteration from './_components/BudgetIteration'
@@ -27,12 +27,19 @@ const Home: PageFC = () => {
 
   const [newAmount, setNewAmount] = useState<string>('')
 
-  const [value, setValue] = useState<string | null>(null)
+  const [selectedIteration, setSelectedIteration] = useState<string | null>(null)
+  const [lastStatus, setLastStatus] = useState<LoadStatus>('first_load')
 
   useEffect(() => {
+    setLastStatus(statusOfData)
     if (data.length === 0) return
-    if (!value) { setValue(data?.[0]?.[0] || getCurrentMonth()) }
-  }, [data, value])
+    if (
+      lastStatus === 'first_load' ||
+      lastStatus === 'local_load'
+    ) {
+      setSelectedIteration(data?.[0]?.[0])
+    }
+  }, [data, selectedIteration, statusOfData, lastStatus])
 
   return (
     <Page config={config} id='page_comp'>
@@ -67,11 +74,12 @@ const Home: PageFC = () => {
           </Accordion>
         }
         success={
-          <Accordion value={value} onChange={setValue}>
+          <Accordion value={selectedIteration} onChange={setSelectedIteration}>
             {
               data.map(([id, value]) => (
                 <BudgetIteration
                   key={id}
+                  isSelected={id === selectedIteration}
                   newAmount={newAmount}
                   iteration={value.iteration}
                   transactions={value.transactions}

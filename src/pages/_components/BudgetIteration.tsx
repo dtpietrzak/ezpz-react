@@ -14,6 +14,7 @@ import AddTransaction from './BudgetIteration/AddTransaction';
 import { monthIdToDate } from '../_helpers/conversions';
 
 type BudgetIterationProps = {
+  isSelected: boolean
   newAmount: string
   iteration: Iteration
   transactions: Transaction[]
@@ -29,6 +30,7 @@ type BudgetIterationProps = {
 }
 
 const BudgetIteration: FC<BudgetIterationProps> = ({
+  isSelected,
   newAmount,
   iteration,
   transactions,
@@ -77,6 +79,7 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
   return (
     <Accordion.Item value={iteration.id}>
       <Title
+        isSelected={isSelected}
         iterationId={iteration.id}
         iterationType={iteration.type}
       />
