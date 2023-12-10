@@ -14,6 +14,7 @@ export const cm = (...args: ClassValue[]): string => {
 
 export const isLoading = (status: LoadStatus, exclude_first?: boolean) => {
   if (status === 'first_load' && !exclude_first) return true
+  if (status === 'local_load') return true
   if (status === 'loading') return true
   return false
 }
