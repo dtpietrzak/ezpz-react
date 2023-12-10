@@ -3,15 +3,15 @@ import { LoadStatus } from 'ezpz/types'
 
 interface LoadHandlerProps extends HTMLProps<HTMLDivElement> {
   status: LoadStatus
-  init?: JSX.Element
-  loading: JSX.Element
+  first_load: JSX.Element
+  loading?: JSX.Element
   success: JSX.Element
   error?: JSX.Element
 }
 
 export const LoadHandler: FC<LoadHandlerProps> = ({
   status,
-  init,
+  first_load,
   loading,
   success,
   error,
@@ -19,24 +19,13 @@ export const LoadHandler: FC<LoadHandlerProps> = ({
 }: LoadHandlerProps) => {
   return (
     <div {...props}>
-      <Suspense fallback={
-        status === 'init' ?
-          init ? init : loading : loading
-      }>
+      <Suspense fallback={first_load}>
         {
-          status === 'init' ?
-            init ? init : loading
-            :
-            status === 'loading' ?
-              loading
-              :
-              status === 'success' ?
-                success
-                :
-                status === 'error' ?
-                  error ? error : loading
-                  :
-                  null
+          status === 'first_load' ? first_load
+            : status === 'loading' ? loading ? loading : success
+              : status === 'success' ? success
+                : status === 'error' ? error ? error : success
+                  : null
         }
       </Suspense>
     </div>

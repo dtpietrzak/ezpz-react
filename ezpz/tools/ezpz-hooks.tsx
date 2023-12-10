@@ -123,7 +123,7 @@ export const useServer = <
         initialState,
         () => { },
         () => promiseNotReady,
-        'init',
+        'first_load',
         () => promiseNotReady,
       ]
     }
@@ -200,7 +200,7 @@ export const useServer = <
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [status, _setStatus] = useState<LoadStatus>(
-    initFromServer ? 'success' : 'init'
+    initFromServer ? 'success' : 'first_load'
   )
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -372,7 +372,7 @@ export const useServer = <
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     let ignore = false
-    if (status !== 'init') setStatus('loading')
+    if (status !== 'first_load') setStatus('loading')
     _loadFunction(ignore).then((good) => { if (good) setStatus('success') })
     return () => {
       ignore = true
@@ -383,7 +383,7 @@ export const useServer = <
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (status === 'loading' || status === 'init') nprogress.start()
+    if (status === 'loading' || status === 'first_load') nprogress.start()
     if (status === 'success' || status === 'error') nprogress.complete()
   }, [status])
 
@@ -431,7 +431,7 @@ export const useServerSync = <T extends JSONable>(
   }
 
   const [state, _setLocalState] = useState<T>(initialState)
-  const [status, setStatus] = useState<LoadStatus>('init')
+  const [status, setStatus] = useState<LoadStatus>('first_load')
 
   const setLocalState = (data: React.SetStateAction<T>) => {
     if (typeof data === 'function') {

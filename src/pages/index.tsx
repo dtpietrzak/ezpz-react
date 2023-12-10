@@ -38,7 +38,7 @@ const Home: PageFC = () => {
     <Page config={config} id='page_comp'>
       <LoadHandler
         status={statusOfData}
-        loading={
+        first_load={
           <Accordion defaultValue={'loading'}>
             <Accordion.Item value={'loading'}>
               <Accordion.Control h={50}>
