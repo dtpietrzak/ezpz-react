@@ -18,7 +18,7 @@ const ProvidersForClient: FC = () => {
           h={0}
           mt={-10}
           position="top-right"
-          opacity={0.8}
+          opacity={0.92}
         />
         <Layouts>
           <Routes>
