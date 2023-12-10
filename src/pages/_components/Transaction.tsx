@@ -43,16 +43,16 @@ export const TransactionItem: FC<TransactionItemProps> = ({
           'flex justify-between',
           i === 0 && 'mt-4',
         )}>
-          <div className='flex'>
-            <div className='flex w-20 justify-end mr-2 text-right font-mono'>
-              <EditText size='md' fw={500} mb='lg'
+          <div className='flex gap-1'>
+            <div className='flex w-24 justify-end text-right font-mono'>
+              <EditText size='sm' fw={500} mb='lg'
                 loadStatus={statusOfData}
                 prefix='$ '
                 value={amountToDollars(transaction.amount)}
                 onSave={(newVal) => onEdit(newVal, 'amount')}
               />
             </div>
-            <div className='flex-auto max-w-[190px]'>
+            <div className='flex-grow max-w-[190px]'>
               <EditText size='sm' fw={500} mb='lg' c='dimmed'
                 loadStatus={statusOfData}
                 prefix='- '

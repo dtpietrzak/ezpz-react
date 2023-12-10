@@ -104,16 +104,22 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
         }
         {
           (iteration.type === 'unique' && iteration.startingBalance !== 0) &&
-          <>
+          <div className='mb-3'>
             <Progress.Root size="xl">
               <Progress.Section
                 value={dollarsBurnedPercent}
                 color={dollarsBurnedPercent < 100 ? 'black' : 'red'}
               >
                 <Progress.Label>
-                  {dollarsBurnedPercent.toFixed(0)}% - {
-                    dollarsBurnedPercent < 100 ?
-                      'Spent' : 'Over Spent'
+                  {
+                    dollarsBurnedPercent > 25 ?
+                      `${dollarsBurnedPercent.toFixed(0)}% - ${dollarsBurnedPercent < 100 ?
+                        'Spent' : 'Over Spent'}`
+                      :
+                      dollarsBurnedPercent > 10 ?
+                        `${dollarsBurnedPercent.toFixed(0)}%`
+                        :
+                        ''
                   }
                 </Progress.Label>
               </Progress.Section>
@@ -123,11 +129,13 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
                   value={100 - dollarsBurnedPercent}
                   color='green'
                 >
-                  <Progress.Label>Remaining</Progress.Label>
+                  <Progress.Label>
+                    {dollarsBurnedPercent > 80 ? '' : 'Remaining'}
+                  </Progress.Label>
                 </Progress.Section>
               }
             </Progress.Root>
-          </>
+          </div>
         }
         <AddTransaction
           newAmount={newAmount}
@@ -136,7 +144,7 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
           onUpdateNewAmount={onUpdateNewAmount}
         />
         <ScrollArea h={240} mt={16} type="never"
-          className='overflow-x-hidden bg-zinc-100 rounded-xl pr-2'
+          className='overflow-x-hidden border border-solid border-zinc-300 bg-zinc-100 rounded-md pr-2'
         >
           {
             transactions.sort((a, b) => (b.date - a.date)).map((transaction, i) => (

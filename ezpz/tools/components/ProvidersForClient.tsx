@@ -15,9 +15,7 @@ const ProvidersForClient: FC = () => {
       <ProvidersForServerAndClient data={{}}>
         <Notifications
           autoClose={1000}
-          h={0}
-          mt={-10}
-          position="top-right"
+          position="bottom-left"
           opacity={0.92}
         />
         <Layouts>

@@ -31,8 +31,8 @@ const Home: PageFC = () => {
 
   useEffect(() => {
     if (data.length === 0) return
-    setValue(data?.[0]?.[0] || getCurrentMonth())
-  }, [data])
+    if (!value) { setValue(data?.[0]?.[0] || getCurrentMonth()) }
+  }, [data, value])
 
   return (
     <Page config={config} id='page_comp'>
