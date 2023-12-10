@@ -1,5 +1,5 @@
-import { cm, useServer, useState } from "ezpz"
-import { ActionIcon, Drawer } from "@mantine/core"
+import { cm, isLoading, useServer, useState } from "ezpz"
+import { ActionIcon, Drawer, Loader } from "@mantine/core"
 import { useDisclosure } from '@mantine/hooks'
 import { LayoutFC } from "ezpz/types"
 import { Budget, ServerDataEntries, ServerDataEntry } from "src/_types/global"
@@ -70,10 +70,13 @@ const MainLayout: LayoutFC = ({
   }).filter(Boolean)
 
   return (
-    <div className={cm('w-full h-[calc(100dvh)] bg-zinc-200')}>
-      <div className={cm('w-full h-12 bg-zinc-700 flex justify-between items-center px-4')}>
+    <div className={cm('w-full flex flex-col h-[calc(100dvh)] bg-zinc-200')}>
+      <div className='flex-grow px-2 overflow-y-scroll overflow-x-hidden'>
+        {children}
+      </div>
+      <div className={cm('w-full h-16 bg-zinc-700 flex justify-between items-center px-4')}>
         <div className={cm('text-white flex items-center h-12 text-2xl font-bold align-middle font-mono')}>
-          ez spend
+          {isLoading(statusOfData) ? <Loader/> : 'ez spend'}
         </div>
         <div
           className={cm('text-white text-2xl font-bold align-middle cursor-pointer')}
@@ -86,9 +89,6 @@ const MainLayout: LayoutFC = ({
         >
           <IconMenu2 />
         </ActionIcon>
-      </div>
-      <div className='px-2 overflow-y-scroll overflow-x-hidden'>
-        {children}
       </div>
       <Drawer
         opened={drawerOpened}

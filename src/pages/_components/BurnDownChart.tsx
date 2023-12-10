@@ -125,7 +125,7 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
   }, [data, numOfTicks, totalAmount])
 
   return (
-    <Paper shadow="xs" bg='rgb(220,220,220)' mah={100}>
+    <Paper shadow="xs" bg='rgb(244,244,245)' mah={100}>
       <Line
         options={options}
         data={chartData}

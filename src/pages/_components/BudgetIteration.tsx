@@ -44,7 +44,9 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
   const spent = transactions.reduce((acc, cur) => acc + cur.amount, 0)
   const remainingBalance = iteration.startingBalance - spent
 
-  const dollarsBurnedPercent = (spent / iteration.startingBalance) * 100
+  const dollarsBurnedPercent = (
+    spent === 0 || iteration.startingBalance === 0
+  ) ? 0 : (spent / iteration.startingBalance) * 100
 
   const yearlyTotalSpendable = iteration.startingBalance * 12
   const weeklyTotalSpendable = yearlyTotalSpendable / 52
@@ -101,7 +103,7 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
           </>
         }
         {
-          iteration.type === 'unique' &&
+          (iteration.type === 'unique' && iteration.startingBalance !== 0) &&
           <>
             <Progress.Root size="xl">
               <Progress.Section
@@ -133,11 +135,14 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
           onAddNewTransaction={onAddNewTransaction}
           onUpdateNewAmount={onUpdateNewAmount}
         />
-        <ScrollArea h={240} mt={16} type="never">
+        <ScrollArea h={240} mt={16} type="never"
+          className='overflow-x-hidden bg-zinc-100 rounded-xl pr-2'
+        >
           {
-            transactions.sort((a, b) => (b.date - a.date)).map((transaction) => (
+            transactions.sort((a, b) => (b.date - a.date)).map((transaction, i) => (
               <TransactionItem
                 key={transaction.id}
+                i={i}
                 transaction={transaction}
                 statusOfData={statusOfData}
 

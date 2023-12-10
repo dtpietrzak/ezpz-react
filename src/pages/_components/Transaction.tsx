@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { FC, useEffect, useState } from 'ezpz'
+import { FC, cm, useEffect, useState } from 'ezpz'
 import EditText from './EditText'
 import { amountToDollars } from '../_helpers/conversions'
 import { Transaction } from 'src/_types/global'
@@ -9,6 +9,7 @@ import { IconX } from '@tabler/icons-react'
 
 
 type TransactionItemProps = {
+  i: number
   transaction: Transaction
   statusOfData: LoadStatus
 
@@ -17,6 +18,7 @@ type TransactionItemProps = {
 }
 
 export const TransactionItem: FC<TransactionItemProps> = ({
+  i,
   transaction,
   statusOfData,
 
@@ -37,7 +39,10 @@ export const TransactionItem: FC<TransactionItemProps> = ({
       timingFunction="ease"
     >
       {(styles) => (
-        <div style={styles} className='flex justify-between'>
+        <div style={styles} className={cm(
+          'flex justify-between',
+          i === 0 && 'mt-4',
+        )}>
           <div className='flex'>
             <div className='flex w-20 justify-end mr-2 text-right font-mono'>
               <EditText size='md' fw={500} mb='lg'
