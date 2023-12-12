@@ -47,13 +47,16 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
   useEffect(() => {
     setOptions({
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: {
           min: 0,
           max: totalAmount,
           display: false,
         },
-        x: { display: false }
+        x: {
+          display: false,
+        }
       },
       plugins: {
         legend: {
@@ -71,7 +74,7 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
     ).map((i) => i.toString())
 
     let acc: number = 0
-    const remainingForEachDaySoFar = data.map((amount, i) => {
+    const remainingForEachDaySoFar = data.map((amount) => {
       acc += amount
       const remaining = totalAmount - acc
       return remaining

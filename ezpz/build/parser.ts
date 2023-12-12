@@ -1,7 +1,7 @@
 import { parse } from '@babel/parser'
 import { v4 as uuidv4 } from 'uuid'
 import * as t from '@babel/types'
-import { transformFromAstSync, traverse } from '@babel/core'
+import babel, { transformFromAstSync, traverse } from '@babel/core'
 import { _LoadFunctionDataBuilder } from 'ezpz/types'
 
 export const devDefinedInitIdUnique: Map<string, string> = new Map()
@@ -150,9 +150,26 @@ export const parseComponent = (filePath: string, fileContents: string) => {
         node.declarations[0].init.arguments[1].properties.forEach((prop) => {
           if (prop.key.name === 'loadFunction') {
             componentLoadFunctionUIDs.push(loadFunctionUid!)
-            componentLoadFunctions.push(componentCode.substring(
+
+            const loadFunctionRaw = componentCode.substring(
               prop.value.start, prop.value.end,
-            ).replace(/[\n\s]+/g, ' '))
+            )
+            const loadFunctionBabel = babel.transformSync(loadFunctionRaw, {
+              filename: filePath,
+              ast: false,
+              compact: false,
+              sourceMaps: false,
+              configFile: false,
+              babelrc: false,
+              presets: [
+                '@babel/preset-typescript',
+                ["@babel/preset-react", { "runtime": "automatic" }],
+              ]
+            })?.code ?? ''
+            const loadFunctionDeWhiteSpaced = loadFunctionBabel.replace(/[\n\s]+/g, ' ')
+            const loadFunctionRemovedLastSemiColon = loadFunctionDeWhiteSpaced.replace(/;$/, '')
+
+            componentLoadFunctions.push(loadFunctionRemovedLastSemiColon)
           }
         })
 

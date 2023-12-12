@@ -6,7 +6,6 @@ import { port, serverRoutes } from 'src/server'
 import { middleware } from 'src/server/middleware'
 import rateLimit from 'express-rate-limit'
 
-
 let server: ReturnType<Application['listen']> | null = null
 
 const __dirname = new URL('.', import.meta.url).pathname

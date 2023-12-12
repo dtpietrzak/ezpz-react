@@ -70,6 +70,7 @@ const esbuildConfig = {
 
   plugins: process.env.NODE_ENV === 'production' ?
     [
+      babelPlugin,
       CssModulesPlugin({
         // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
         force: true,
@@ -78,9 +79,9 @@ const esbuildConfig = {
         namedExports: true,
         inject: false,
       }),
-      babelPlugin,
     ] :
     [
+      babelPlugin,
       CssModulesPlugin({
         // @see https://github.com/indooorsman/esbuild-css-modules-plugin/blob/main/index.d.ts for more details
         force: true,

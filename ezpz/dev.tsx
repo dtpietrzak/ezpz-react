@@ -13,7 +13,9 @@ import { updateRoutesWithNewBuild } from './server/helpers'
 import express from 'express'
 import { port } from 'src/server'
 import open from 'open'
+import { addRelativeToFetch } from './tools/node-wrappers'
 
+addRelativeToFetch()
 const isCachingBuilds = false
 const shouldOpenBrowser = false
 

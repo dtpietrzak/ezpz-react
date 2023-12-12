@@ -6,14 +6,13 @@ import {
   LoadHandler,
 } from 'ezpz'
 import { LoadStatus, PageConfig, PageFC } from 'ezpz/types'
-import { Accordion, Skeleton, Text } from '@mantine/core'
-import { Budget, ServerDataEntries, ServerDataEntry, Transaction } from 'src/_types/global'
+import { Accordion, Skeleton } from '@mantine/core'
+import { ServerDataEntries } from 'src/_types/global'
 import BudgetIteration from './_components/BudgetIteration'
 import { updateStartingBalance, updateTransaction } from './_helpers/updates'
 import { addTransaction } from './_helpers/additions'
 import { deleteTransaction } from './_helpers/deletes'
 import { isValidAmount } from './_helpers/guards'
-import { formattedMonth } from './_helpers/conversions'
 
 export const config: PageConfig = {
   title: 'Home',
@@ -131,11 +130,6 @@ const Home: PageFC = () => {
       />
     </Page>
   )
-}
-
-const getCurrentMonth = (): string => {
-  const date = new Date()
-  return `${date.getFullYear()}-${formattedMonth(date.getMonth())}`
 }
 
 export default Home

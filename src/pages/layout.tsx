@@ -20,9 +20,12 @@ const MainLayout: LayoutFC = ({
   const [data, setLocalData, setServerData, statusOfData, reloadData] =
     useServer<ServerDataEntries, { auth: string }>([], {
       loadFunction: async (data) => {
-        const res = data?.auth ?
-          await fetch(`/api`, { cache: 'no-cache' }) :
-          await fetch(`/api?auth=${data?.auth}`, { cache: 'no-cache' });
+        let res: Response
+        if (data?.auth) {
+          res = await fetch(`/api?auth=${data?.auth}`, { cache: 'no-cache' })
+        } else {
+          res = await fetch(`/api`, { cache: 'no-cache' })
+        }
         return res.json();
       },
       updateFunction: async (data) => {

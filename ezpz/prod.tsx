@@ -7,7 +7,9 @@ import { prepServer, startServer, stopServer } from './server'
 import { build, esbuildContext, } from "./build"
 
 import { updateRoutesWithNewBuild } from './server/helpers'
+import { addRelativeToFetch } from './tools/node-wrappers'
 
+addRelativeToFetch()
 const isCachingBuilds = false
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
