@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { FC, useEffect, useState } from 'ezpz'
+import { FC, LoadHandler, useEffect, useState } from 'ezpz'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { Paper } from '@mantine/core'
+import { LoadStatus } from 'ezpz/types'
 
 ChartJS.register(
   CategoryScale,
@@ -27,12 +28,14 @@ type BurnDownChartProps = {
   data: number[]
   numOfTicks: number
   totalAmount: number
+  loadStatus: LoadStatus
 }
 
 export const BurnDownChart: FC<BurnDownChartProps> = ({
   data,
   numOfTicks,
   totalAmount,
+  loadStatus,
 }) => {
   const [options, setOptions] = useState<
     React.ComponentProps<(typeof Line)>['options']
@@ -128,11 +131,24 @@ export const BurnDownChart: FC<BurnDownChartProps> = ({
   }, [data, numOfTicks, totalAmount])
 
   return (
-    <Paper shadow="xs" bg='rgb(244,244,245)' mah={100}>
-      <Line
-        options={options}
-        data={chartData}
-      />
-    </Paper>
+    <LoadHandler
+      status={loadStatus}
+      firstLoad={
+        <Paper shadow="xs" bg='rgb(244,244,245)' mah={100}>
+          <Line
+            options={options}
+            data={{labels: [], datasets: []}}
+          />
+        </Paper>
+      }
+      success={
+        <Paper shadow="xs" bg='rgb(244,244,245)' mah={100}>
+          <Line
+            options={options}
+            data={chartData}
+          />
+        </Paper>
+      }
+    />
   )
 }

@@ -40,6 +40,7 @@ export type UseServerOptions<T extends (JSONable | unknown) = unknown> = {
   loadOn?: 'client' | 'server'
   serverInit?: T
   serverSyncId?: string
+  localCache?: 'localStorage' | 'none'
   serverLoadAt?: 'compile' | 'runtime'
   updateAs?: 'optimistic' | 'pessimistic' | 'client-only'
 }

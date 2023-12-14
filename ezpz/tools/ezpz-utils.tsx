@@ -122,3 +122,24 @@ export const fromLocalStorage = async (_key: string): Promise<JSONable | undefin
   if (!value) return undefined
   return JSON.parse(value)
 }
+
+export const susMap = <T,>(
+  data: T[],
+  status: LoadStatus,
+  susData: T | T[],
+  fn: (item: T, index: number) => React.ReactNode,
+) => {
+  if (status === 'first_load' && data.length === 0) {
+    if (!susData) return fn(null as unknown as T, -1)
+    if (Array.isArray(susData)) {
+      return susData.map((item, index) => {
+        return fn(item, index)
+      })
+    }
+    return fn(susData, -1)
+  }
+
+  return data.map((item, index) => {
+    return fn(item, index)
+  })
+}

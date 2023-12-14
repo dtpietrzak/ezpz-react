@@ -109,13 +109,14 @@ export const useServer = <
   initialState: T,
   { loadFunction, updateFunction }: ServerFunctions<T, U>,
   {
-    loadOn, serverLoadAt, updateAs, serverSyncId, serverInit,
+    loadOn, serverLoadAt, updateAs, serverSyncId, serverInit, localCache,
   }: UseServerOptions<T>,
   serverLoadData?: U,
 ): UseServerReturn<T> => {
   if (!loadOn) loadOn = 'client'
   if (!serverLoadAt) serverLoadAt = 'runtime'
   if (!updateAs) updateAs = 'optimistic'
+  if (!localCache) localCache = 'localStorage'
 
   if (isServer) {
     if (loadOn === 'client' || !serverInit) {
@@ -214,7 +215,12 @@ export const useServer = <
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (serverSyncId && init && typeof init[serverSyncId] === 'undefined') {
+    if (
+      localCache === 'localStorage' &&
+      serverSyncId &&
+      init &&
+      typeof init[serverSyncId] === 'undefined'
+    ) {
       init[serverSyncId] = fromLocalStorage(serverSyncId)
         .then((data) => {
           if (data) {
@@ -256,11 +262,13 @@ export const useServer = <
                 data,
                 serverSyncId,
               )
-              toLocalStorage(
-                serverSyncId, JSON.stringify(
-                  data ?? initialState
+              if (localCache === 'localStorage') {
+                toLocalStorage(
+                  serverSyncId, JSON.stringify(
+                    data ?? initialState
+                  )
                 )
-              )
+              }
             }
             setLocalState(data ?? initialState)
           }
@@ -427,9 +435,12 @@ export const useServerSync = <T extends JSONable>(
   {
     syncLocalChanges = true, serverInit,
   }: UseServerSyncOptions<T>,
+  debugId?: string
 ): UseServerReturn<T> => {
+  if (debugId) console.log(debugId)
   serverSyncId = `__dev_defined__${serverSyncId}`
   if (serverInit) initialState = serverInit
+  let initialStatus: LoadStatus = 'first_load'
 
   if (isClient) {
     // check if it's already been cached
@@ -445,15 +456,17 @@ export const useServerSync = <T extends JSONable>(
     // @ts-expect-error - this is a hack to get around the fact that
     // data[serverSyncId] is not typed as T
     initialState = data[serverSyncId]
+    initialStatus = 'success'
   }
 
   if (init?.[serverSyncId] && typeof init[serverSyncId] !== 'undefined') {
     // override internal initial state with server state
     initialState = init[serverSyncId]
+    initialStatus = 'success'
   }
 
   const [state, _setLocalState] = useState<T>(initialState)
-  const [status, setStatus] = useState<LoadStatus>('first_load')
+  const [status, setStatus] = useState<LoadStatus>(initialStatus)
 
   const setLocalState = (data: React.SetStateAction<T>) => {
     if (typeof data === 'function') {

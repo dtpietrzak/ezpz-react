@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 import { getDate, getDaysInMonth, getWeek } from 'date-fns';
-import { FC } from 'ezpz';
+import { FC, LoadHandler } from 'ezpz';
 import { Iteration, Transaction } from 'src/_types/global';
-import { Accordion, Progress, ScrollArea } from '@mantine/core';
+import { Accordion, Progress, ScrollArea, Skeleton } from '@mantine/core';
 import { LoadStatus } from 'ezpz/types';
 import { BurnDownChart } from './BurnDownChart';
 import { TransactionItem } from './Transaction';
@@ -85,9 +85,9 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
       />
       <Accordion.Panel className='max-h-60vh'>
         <Remaining
+          loadStatus={statusOfData}
           remainingBalance={remainingBalance}
           startingBalance={iteration.startingBalance}
-          statusOfData={statusOfData}
 
           onUpdateBudgetTotal={onUpdateBudgetTotal}
         />
@@ -95,11 +95,13 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
           iteration.type === 'month' &&
           <>
             <BurnDownChart
+              loadStatus={statusOfData}
               data={totalTransactionAmountPerDaysThisMonthSoFar}
               numOfTicks={numberOfDaysThisMonth}
               totalAmount={iteration.startingBalance / 100}
             />
             <ThisWeekAnnually
+              loadStatus={statusOfData}
               weeklyTotalSpent={weeklyTotalSpent}
               weeklyTotalSpendable={weeklyTotalSpendable}
             />
@@ -141,6 +143,7 @@ const BudgetIteration: FC<BudgetIterationProps> = ({
           </div>
         }
         <AddTransaction
+          loadStatus={statusOfData}
           newAmount={newAmount}
 
           onAddNewTransaction={onAddNewTransaction}
